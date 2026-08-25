@@ -1,1 +1,891 @@
-<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mein Trainingsplan</title><style>:root{--b:#090c10;--c:#141a21;--l:#293440;--x:#d9ff36;--t:#f1f5f9;--m:#9ba8b6}*{box-sizing:border-box}body{margin:0;background:var(--b);color:var(--t);font:16px system-ui}.a{max-width:850px;margin:auto;padding:24px 16px 60px}.tag{color:var(--x);font-weight:800;font-size:12px;letter-spacing:2px}h1{font-size:clamp(38px,8vw,70px);line-height:.9;letter-spacing:-4px;margin:10px 0 14px}p{color:var(--m)}.c{margin-top:16px;padding:18px;background:var(--c);border:1px solid var(--l);border-radius:15px}.row{display:flex;gap:8px;overflow:auto;padding-bottom:4px}button{padding:9px 12px;border:1px solid var(--l);border-radius:9px;background:#0e1319;color:var(--t);font:inherit;white-space:nowrap;cursor:pointer}.on,.save{background:var(--x);color:#121609;border-color:var(--x);font-weight:800}.lab{display:block;margin:0 0 8px;color:var(--m);font-size:13px;font-weight:700}#task{font-size:18px;line-height:1.5}.rpe{color:#76e9b8;font-size:13px}form{display:grid;grid-template-columns:1fr 1fr;gap:12px}input,select,textarea{width:100%;padding:10px;border:1px solid var(--l);border-radius:8px;background:#090d12;color:var(--t);font:inherit}textarea{min-height:90px}.full{grid-column:1/-1}.check{display:flex;gap:9px;align-items:center}.check input{width:20px}.save{border:0}.ok{color:#76e9b8;font-weight:bold;display:none}@media(max-width:520px){form{grid-template-columns:1fr}}</style><main class="a"><div class="tag">VORBEREITUNG · PRIVAT</div><h1>Mein<br>Trainingsplan.</h1><p>Woche und Tag wählen, Training durchführen und dein Ergebnis speichern.</p><section class="c"><span class="lab">1 · WOCHE</span><div class="row" id="ws"></div></section><section class="c"><span class="lab">2 · TAG</span><div class="row" id="ds"></div></section><section class="c"><span class="lab" id="title"></span><div class="rpe" id="rp"></div><p id="task"></p></section><section class="c"><h2>Dein Ergebnis</h2><p>Gespeichert nur in diesem Browser auf diesem Gerät.</p><form id="f"><label class="check full"><input id="done" type="checkbox">Training erledigt</label><label><span class="lab">DEIN RPE</span><select id="r"><option value="">–</option><option>3–4 locker</option><option>6–7 fordernd</option><option>8–9 sehr hart/Test</option></select></label><label><span class="lab">ZEIT / ERGEBNIS</span><input id="res" placeholder="z. B. 5 km · 24:30"></label><label class="full"><span class="lab">NOTIZ</span><textarea id="n" placeholder="Gewicht, Wiederholungen, Gefühl …"></textarea></label><div class="full"><button class="save">Training speichern</button> <span class="ok" id="ok">Gespeichert ✓</span></div></form></section></main><script>let W=0,D=0,N=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];let A=[['25–30 Min. locker + Kraft A','Mobilität + Spaziergang','6×1 Min. zügig, 2 Min. locker','Kraft B','Mobilität + Spaziergang','35–40 Min. locker','Ruhetag'],['30–35 Min. locker + Kraft A','Mobilität + Spaziergang','7×1 Min. zügig, 2 Min. locker','Kraft B','Mobilität + Spaziergang','40–45 Min. locker','Ruhetag'],['35 Min. locker + Kraft A','Mobilität + Spaziergang','6×2 Min. zügig, 2 Min. locker','Kraft B','Mobilität + Spaziergang','45–50 Min. locker','Ruhetag'],['30–35 Min. locker + Kraft A','Mobilität + Spaziergang','5×3 Min. zügig, 2 Min. locker','Kraft B','Mobilität + Spaziergang','5-km-Standorttest','Ruhetag'],['35–40 Min. locker + Kraft A','Mobilität + Schwimmen','6×400 m, 2 Min. Pause','Kraft B reduziert + Parcours 3 Runden','Mobilität + Schwimmen','50 Min. locker','Ruhetag'],['50-kg-Banktest + Kraft A','Mobilität + Schwimmen','8×400 m, 2 Min. Pause','Kraft B','Mobilität + Schwimmen','2×10 Min. zügig','Ruhetag'],['40 Min. locker + Kraft A','Schwimmen','5×600 m, 2:30 Min. Pause','Kraft B reduziert + Parcours 3 Runden','Schwimmen','55–60 Min. locker','Ruhetag'],['Klimmzugtest + Kraft A','Schwimmen','4×800 m','Kraft B','Schwimmen','45–50 Min. locker','Ruhetag'],['40–45 Min. locker + Kraft A','Schwimmen + Tauchen','10×200 m, 90 Sek. Pause','Kraft B reduziert + Parcours 4 Runden','Schwimmen + Tauchen','55–60 Min. locker','Ruhetag'],['35–40 Min. locker + Kraft A','Schwimmen','400-m-Test','Kraft B','Schwimmen','3×8 Min. zügig','Ruhetag'],['40–45 Min. locker + Kraft A','Schwimmen + Tauchen','5×1.000 m','Kraft B reduziert + Parcours 4 Runden','Schwimmen + Tauchen','60–65 Min. locker','Ruhetag'],['30–35 Min. locker + Kraft A','Schwimmen','4×200 m schnell','Kraft B','Schwimmen','5-km-Abschlusstest','Ruhetag']];let k=()=>`sek-${W}-${D}`,g=()=>JSON.parse(localStorage.getItem(k())||'{}');function u(){ws.innerHTML=A.map((x,i)=>`<button class="${i==W?'on':''}" onclick="W=${i};D=0;u()">Woche ${i+1}</button>`).join('');ds.innerHTML=N.map((x,i)=>`<button class="${i==D?'on':''}" onclick="D=${i};u()">${x}</button>`).join('');let x=g();title.textContent=`WOCHE ${W+1} · ${N[D]}`;task.textContent=A[W][D];rp.textContent=D==6?'RUHETAG':D==2?'ZIEL-RPE 7–8':'ZIEL-RPE 3–4 / 6–7';done.checked=!!x.done;r.value=x.r||'';res.value=x.res||'';n.value=x.n||''}f.onsubmit=e=>{e.preventDefault();localStorage.setItem(k(),JSON.stringify({done:done.checked,r:r.value,res:res.value,n:n.value}));ok.style.display='inline';setTimeout(()=>ok.style.display='none',1600)};u()</script>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mein Trainingsplan</title>
+
+  <style>
+    :root {
+      --b: #090c10;
+      --c: #141a21;
+      --l: #293440;
+      --x: #d9ff36;
+      --t: #f1f5f9;
+      --m: #9ba8b6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--b);
+      color: var(--t);
+      font: 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .a {
+      max-width: 850px;
+      margin: auto;
+      padding: 24px 16px 60px;
+    }
+
+    .tag {
+      color: var(--x);
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    h1 {
+      font-size: clamp(38px, 8vw, 70px);
+      line-height: .9;
+      letter-spacing: -4px;
+      margin: 10px 0 14px;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    p {
+      color: var(--m);
+    }
+
+    .c {
+      margin-top: 16px;
+      padding: 18px;
+      background: var(--c);
+      border: 1px solid var(--l);
+      border-radius: 15px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+
+    button {
+      padding: 9px 12px;
+      border: 1px solid var(--l);
+      border-radius: 9px;
+      background: #0e1319;
+      color: var(--t);
+      font: inherit;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    button:hover {
+      border-color: #566574;
+    }
+
+    .on,
+    .save {
+      background: var(--x);
+      color: #121609;
+      border-color: var(--x);
+      font-weight: 800;
+    }
+
+    .doneDay {
+      opacity: .42;
+    }
+
+    .lab {
+      display: block;
+      margin: 0 0 8px;
+      color: var(--m);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    #task {
+      font-size: 18px;
+      line-height: 1.5;
+      color: var(--t);
+    }
+
+    .rpe {
+      color: #76e9b8;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .ex {
+      border-top: 1px solid var(--l);
+      padding: 13px 0;
+    }
+
+    .ex:first-child {
+      border-top: 0;
+    }
+
+    .ex b {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .ex small {
+      color: var(--m);
+    }
+
+    .exgrid,
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 9px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--l);
+      border-radius: 8px;
+      background: #090d12;
+      color: var(--t);
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--x);
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .check {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .check input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--x);
+    }
+
+    .save {
+      border: 0;
+    }
+
+    .ok {
+      color: #76e9b8;
+      font-weight: bold;
+      display: none;
+      margin-left: 5px;
+    }
+
+    .empty {
+      color: var(--m);
+      padding: 12px 0 3px;
+    }
+
+    @media (max-width: 520px) {
+      form,
+      .exgrid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="a">
+
+  <div class="tag">VORBEREITUNG · PRIVAT</div>
+
+  <h1>
+    Mein<br>
+    Trainingsplan.
+  </h1>
+
+  <p>
+    Woche und Tag wählen, Training durchführen und dein Ergebnis speichern.
+  </p>
+
+  <!-- WOCHENAUSWAHL -->
+  <section class="c">
+    <span class="lab">1 · WOCHE</span>
+    <div class="row" id="ws"></div>
+  </section>
+
+  <!-- TAGESAUSWAHL -->
+  <section class="c">
+    <span class="lab">2 · TAG</span>
+    <div class="row" id="ds"></div>
+  </section>
+
+  <!-- TRAINING -->
+  <section class="c">
+    <span class="lab" id="title"></span>
+
+    <div class="rpe" id="rp"></div>
+
+    <p id="task"></p>
+
+    <div id="exercises"></div>
+  </section>
+
+  <!-- TAGESERGEBNIS -->
+  <section class="c">
+
+    <h2>Dein Tagesergebnis</h2>
+
+    <p>
+      Gespeichert nur in diesem Browser auf diesem Gerät.
+    </p>
+
+    <form id="f">
+
+      <label class="check full">
+        <input id="done" type="checkbox">
+        Training erledigt
+      </label>
+
+      <label>
+        <span class="lab">DEIN RPE</span>
+
+        <select id="r">
+          <option value="">–</option>
+          <option value="3–4 locker">3–4 locker</option>
+          <option value="6–7 fordernd">6–7 fordernd</option>
+          <option value="8–9 sehr hart/Test">8–9 sehr hart/Test</option>
+        </select>
+      </label>
+
+      <label>
+        <span class="lab">ZEIT / ERGEBNIS</span>
+
+        <input
+          id="res"
+          type="text"
+          placeholder="z. B. 5 km · 24:30"
+        >
+      </label>
+
+      <label class="full">
+        <span class="lab">NOTIZ</span>
+
+        <textarea
+          id="n"
+          placeholder="Gewicht, Wiederholungen, Gefühl …"
+        ></textarea>
+      </label>
+
+      <div class="full">
+        <button type="submit" class="save">
+          Training speichern
+        </button>
+
+        <span class="ok" id="ok">
+          Gespeichert ✓
+        </span>
+      </div>
+
+    </form>
+  </section>
+
+</main>
+
+<script>
+"use strict";
+
+/* =========================================================
+   GRUNDEINSTELLUNGEN
+========================================================= */
+
+let W = 0;
+let D = 0;
+
+const N = [
+  "Montag",
+  "Dienstag",
+  "Mittwoch",
+  "Donnerstag",
+  "Freitag",
+  "Samstag",
+  "Sonntag"
+];
+
+/* =========================================================
+   TRAININGSPLAN
+========================================================= */
+
+const A = [
+
+  [
+    "25–30 Min. locker + Kraft A",
+    "Mobilität + Spaziergang",
+    "6×1 Min. zügig, 2 Min. locker",
+    "Kraft B",
+    "Mobilität + Spaziergang",
+    "35–40 Min. locker",
+    "Ruhetag"
+  ],
+
+  [
+    "30–35 Min. locker + Kraft A",
+    "Mobilität + Spaziergang",
+    "7×1 Min. zügig, 2 Min. locker",
+    "Kraft B",
+    "Mobilität + Spaziergang",
+    "40–45 Min. locker",
+    "Ruhetag"
+  ],
+
+  [
+    "35 Min. locker + Kraft A",
+    "Mobilität + Spaziergang",
+    "6×2 Min. zügig, 2 Min. locker",
+    "Kraft B",
+    "Mobilität + Spaziergang",
+    "45–50 Min. locker",
+    "Ruhetag"
+  ],
+
+  [
+    "30–35 Min. locker + Kraft A",
+    "Mobilität + Spaziergang",
+    "5×3 Min. zügig, 2 Min. locker",
+    "Kraft B",
+    "Mobilität + Spaziergang",
+    "5-km-Standorttest",
+    "Ruhetag"
+  ],
+
+  [
+    "35–40 Min. locker + Kraft A",
+    "Mobilität + Schwimmen",
+    "6×400 m, 2 Min. Pause",
+    "Kraft B reduziert + Parcours 3 Runden",
+    "Mobilität + Schwimmen",
+    "50 Min. locker",
+    "Ruhetag"
+  ],
+
+  [
+    "50-kg-Banktest + Kraft A",
+    "Mobilität + Schwimmen",
+    "8×400 m, 2 Min. Pause",
+    "Kraft B",
+    "Mobilität + Schwimmen",
+    "2×10 Min. zügig",
+    "Ruhetag"
+  ],
+
+  [
+    "40 Min. locker + Kraft A",
+    "Schwimmen",
+    "5×600 m, 2:30 Min. Pause",
+    "Kraft B reduziert + Parcours 3 Runden",
+    "Schwimmen",
+    "55–60 Min. locker",
+    "Ruhetag"
+  ],
+
+  [
+    "Klimmzugtest + Kraft A",
+    "Schwimmen",
+    "4×800 m",
+    "Kraft B",
+    "Schwimmen",
+    "45–50 Min. locker",
+    "Ruhetag"
+  ],
+
+  [
+    "40–45 Min. locker + Kraft A",
+    "Schwimmen + Tauchen",
+    "10×200 m, 90 Sek. Pause",
+    "Kraft B reduziert + Parcours 4 Runden",
+    "Schwimmen + Tauchen",
+    "55–60 Min. locker",
+    "Ruhetag"
+  ],
+
+  [
+    "35–40 Min. locker + Kraft A",
+    "Schwimmen",
+    "400-m-Test",
+    "Kraft B",
+    "Schwimmen",
+    "3×8 Min. zügig",
+    "Ruhetag"
+  ],
+
+  [
+    "40–45 Min. locker + Kraft A",
+    "Schwimmen + Tauchen",
+    "5×1.000 m",
+    "Kraft B reduziert + Parcours 4 Runden",
+    "Schwimmen + Tauchen",
+    "60–65 Min. locker",
+    "Ruhetag"
+  ],
+
+  [
+    "30–35 Min. locker + Kraft A",
+    "Schwimmen",
+    "4×200 m schnell",
+    "Kraft B",
+    "Schwimmen",
+    "5-km-Abschlusstest",
+    "Ruhetag"
+  ]
+
+];
+
+/* =========================================================
+   KRAFTTRAINING
+========================================================= */
+
+const ka = [
+
+  [
+    "Bankdrücken",
+    "3×10 / 4×12–15 / 3×15–20"
+  ],
+
+  [
+    "Klimmzüge",
+    "5×4–6 / 6×4–7 / 5×5–8"
+  ],
+
+  [
+    "Bulgarian Split Squat",
+    "3×8 / 3×10 / 3×10–12 je Bein"
+  ],
+
+  [
+    "Rudern",
+    "3×10–12 / 4×10–12 / 4×12–15"
+  ],
+
+  [
+    "Plank",
+    "3×45–60 / 3×60 / 3×60–75 Sek."
+  ]
+
+];
+
+const kb = [
+
+  [
+    "Kniebeuge oder Beinpresse",
+    "3×8–10 / 4×8–10 / 3×10–12"
+  ],
+
+  [
+    "Rumänisches Kreuzheben",
+    "3×8–10 / 3×10 / 3×10–12"
+  ],
+
+  [
+    "Beugestütze",
+    "4×12–18 / 4×20–25 / 4×25–30"
+  ],
+
+  [
+    "Latzug / negative Klimmzüge",
+    "3×8–10 / 3×10–12 / 3×12–15"
+  ],
+
+  [
+    "Wadenheben",
+    "3×15–20 / 4×15–20 / 4×20"
+  ],
+
+  [
+    "Farmers Carry",
+    "4×28 m / 4×35–42 m / 4×42 m"
+  ]
+
+];
+
+/* =========================================================
+   DOM-ELEMENTE
+========================================================= */
+
+const ws = document.getElementById("ws");
+const ds = document.getElementById("ds");
+const title = document.getElementById("title");
+const rp = document.getElementById("rp");
+const task = document.getElementById("task");
+const exercises = document.getElementById("exercises");
+
+const form = document.getElementById("f");
+const done = document.getElementById("done");
+const r = document.getElementById("r");
+const res = document.getElementById("res");
+const n = document.getElementById("n");
+const ok = document.getElementById("ok");
+
+/* =========================================================
+   LOCALSTORAGE
+========================================================= */
+
+function storageKey() {
+  return `sek-${W}-${D}`;
+}
+
+function getData() {
+  try {
+    return JSON.parse(
+      localStorage.getItem(storageKey()) || "{}"
+    );
+  } catch (error) {
+    console.warn("Gespeicherte Daten konnten nicht gelesen werden.", error);
+    return {};
+  }
+}
+
+/* =========================================================
+   TRAININGSPHASE
+========================================================= */
+
+function getPhase() {
+
+  if (W < 4) {
+    return 0;
+  }
+
+  if (W < 8) {
+    return 1;
+  }
+
+  return 2;
+}
+
+/* =========================================================
+   ÜBUNGEN RENDERN
+========================================================= */
+
+function renderExercises() {
+
+  let list = [];
+
+  if (D === 0) {
+    list = ka;
+  } else if (D === 3) {
+    list = kb;
+  }
+
+  if (!list.length) {
+    exercises.innerHTML =
+      '<div class="empty">Für diesen Tag sind keine Kraftübungen hinterlegt.</div>';
+
+    return;
+  }
+
+  const data = getData();
+  const savedExercises = data.ex || {};
+  const currentPhase = getPhase();
+
+  exercises.innerHTML = list.map((exercise, index) => {
+
+    const saved = savedExercises[index] || {};
+
+    const plans = exercise[1].split(" / ");
+    const currentPlan = plans[currentPhase] || plans[plans.length - 1];
+
+    return `
+      <div class="ex">
+
+        <b>${escapeHtml(exercise[0])}</b>
+
+        <small>
+          Plan: ${escapeHtml(currentPlan)}
+        </small>
+
+        <div class="exgrid">
+
+          <input
+            type="text"
+            data-i="${index}"
+            data-f="weight"
+            placeholder="Gewicht (kg)"
+            value="${escapeAttr(saved.weight || "")}"
+          >
+
+          <input
+            type="text"
+            data-i="${index}"
+            data-f="reps"
+            placeholder="Wdh. geschafft"
+            value="${escapeAttr(saved.reps || "")}"
+          >
+
+          <input
+            type="text"
+            data-i="${index}"
+            data-f="rpe"
+            placeholder="RPE"
+            value="${escapeAttr(saved.rpe || "")}"
+          >
+
+          <input
+            type="text"
+            data-i="${index}"
+            data-f="note"
+            placeholder="Notiz"
+            value="${escapeAttr(saved.note || "")}"
+          >
+
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+/* =========================================================
+   TAGE ERLEDIGT?
+========================================================= */
+
+function dayDone(index) {
+
+  try {
+
+    const data = JSON.parse(
+      localStorage.getItem(`sek-${W}-${index}`) || "{}"
+    );
+
+    return !!data.done;
+
+  } catch {
+    return false;
+  }
+}
+
+/* =========================================================
+   HTML SICHER ESCAPEN
+========================================================= */
+
+function escapeHtml(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+/* =========================================================
+   HAUPTANSICHT AKTUALISIEREN
+========================================================= */
+
+function update() {
+
+  /* Wochen */
+
+  ws.innerHTML = A.map((_, index) => {
+
+    return `
+      <button
+        type="button"
+        class="${index === W ? "on" : ""}"
+        onclick="selectWeek(${index})"
+      >
+        Woche ${index + 1}
+      </button>
+    `;
+
+  }).join("");
+
+
+  /* Tage */
+
+  ds.innerHTML = N.map((day, index) => {
+
+    const completed = dayDone(index);
+
+    return `
+      <button
+        type="button"
+        class="${index === D ? "on" : ""} ${completed ? "doneDay" : ""}"
+        onclick="selectDay(${index})"
+      >
+        ${day}${completed ? " ✓" : ""}
+      </button>
+    `;
+
+  }).join("");
+
+
+  /* Aktuelles Training */
+
+  const data = getData();
+
+  title.textContent =
+    `WOCHE ${W + 1} · ${N[D]}`;
+
+  task.textContent =
+    A[W][D];
+
+  if (D === 6) {
+
+    rp.textContent = "RUHETAG";
+
+  } else if (D === 2) {
+
+    rp.textContent = "ZIEL-RPE 7–8";
+
+  } else {
+
+    rp.textContent = "ZIEL-RPE 3–4 / 6–7";
+
+  }
+
+
+  /* Gespeicherte Tagesdaten */
+
+  done.checked = !!data.done;
+  r.value = data.r || "";
+  res.value = data.res || "";
+  n.value = data.n || "";
+
+
+  /* Kraftübungen */
+
+  renderExercises();
+}
+
+/* =========================================================
+   WOCHENWECHSEL
+========================================================= */
+
+function selectWeek(index) {
+
+  if (index < 0 || index >= A.length) {
+    return;
+  }
+
+  W = index;
+  D = 0;
+
+  update();
+}
+
+/* =========================================================
+   TAGESWECHSEL
+========================================================= */
+
+function selectDay(index) {
+
+  if (index < 0 || index >= N.length) {
+    return;
+  }
+
+  D = index;
+
+  update();
+}
+
+/* =========================================================
+   FORMULAR SPEICHERN
+========================================================= */
+
+form.addEventListener("submit", function(event) {
+
+  event.preventDefault();
+
+  const data = {
+    done: done.checked,
+    r: r.value,
+    res: res.value,
+    n: n.value,
+    ex: {}
+  };
+
+
+  /* Übungsdaten sammeln */
+
+  document.querySelectorAll("[data-i]").forEach(input => {
+
+    const index = input.dataset.i;
+    const field = input.dataset.f;
+
+    if (!data.ex[index]) {
+      data.ex[index] = {};
+    }
+
+    data.ex[index][field] = input.value;
+
+  });
+
+
+  /* Speichern */
+
+  try {
+
+    localStorage.setItem(
+      storageKey(),
+      JSON.stringify(data)
+    );
+
+  } catch (error) {
+
+    alert(
+      "Die Daten konnten nicht gespeichert werden. " +
+      "Möglicherweise ist der lokale Speicher deaktiviert."
+    );
+
+    console.error(error);
+
+    return;
+  }
+
+
+  /* Bestätigung */
+
+  ok.style.display = "inline";
+
+  setTimeout(() => {
+    ok.style.display = "none";
+  }, 1600);
+
+
+  /* Ansicht aktualisieren */
+
+  update();
+
+});
+
+
+/* =========================================================
+   START
+========================================================= */
+
+update();
+
+</script>
+
+</body>
+</html>
