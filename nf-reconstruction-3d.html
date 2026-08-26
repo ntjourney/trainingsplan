@@ -6,136 +6,163 @@
 <meta
   name="viewport"
   content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
->
+/>
 
-<title>N/F — 3D Reconstruction</title>
+<title>N/F — Exact 3D Reconstruction</title>
 
 <style>
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html,
 body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-  background: #000;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #000;
 }
 
 body {
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    background:
+        radial-gradient(
+            ellipse at center,
+            #07111a 0%,
+            #020407 48%,
+            #000000 100%
+        );
 }
 
-#app {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  overflow: hidden;
-  touch-action: none;
+#stage {
+    position: fixed;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    touch-action: none;
+
+    cursor: grab;
+}
+
+#stage:active {
+    cursor: grabbing;
 }
 
 canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 
-/* ---------------------------------------------------------
-   CINEMATIC OVERLAY
---------------------------------------------------------- */
+/* -------------------------------------------------------
+   CINEMATIC ATMOSPHERE
+------------------------------------------------------- */
+
+.atmosphere {
+    position: absolute;
+
+    width: 80vw;
+    height: 70vh;
+
+    left: 50%;
+    top: 44%;
+
+    transform:
+        translate(-50%, -50%);
+
+    background:
+        radial-gradient(
+            ellipse,
+            rgba(0, 105, 255, .12),
+            rgba(0, 50, 130, .035) 42%,
+            transparent 72%
+        );
+
+    filter: blur(40px);
+
+    pointer-events: none;
+
+    z-index: 5;
+}
+
 
 .vignette {
-  position: absolute;
-  inset: 0;
+    position: absolute;
+    inset: 0;
 
-  pointer-events: none;
+    pointer-events: none;
 
-  background:
-    radial-gradient(
-      ellipse at center,
-      transparent 32%,
-      rgba(0,0,0,.16) 57%,
-      rgba(0,0,0,.82) 100%
-    );
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 38%,
+            rgba(0,0,0,.18) 60%,
+            rgba(0,0,0,.82) 100%
+        );
 
-  z-index: 20;
+    z-index: 10;
 }
 
 
-.color-grade {
-  position: absolute;
-  inset: 0;
+.info {
+    position: absolute;
 
-  pointer-events: none;
+    left: 50%;
+    bottom: 18px;
 
-  background:
-    radial-gradient(
-      ellipse at 50% 40%,
-      rgba(0,110,255,.08),
-      transparent 48%
-    );
+    transform:
+        translateX(-50%);
 
-  mix-blend-mode: screen;
+    padding:
+        7px 13px;
 
-  z-index: 21;
-}
+    border:
+        1px solid
+        rgba(70,170,255,.18);
 
+    border-radius:
+        999px;
 
-/* ---------------------------------------------------------
-   SMALL UI
---------------------------------------------------------- */
+    background:
+        rgba(0,5,10,.42);
 
-.label {
+    backdrop-filter:
+        blur(10px);
 
-  position: absolute;
+    -webkit-backdrop-filter:
+        blur(10px);
 
-  left: 50%;
-  bottom: 18px;
+    color:
+        rgba(180,220,255,.5);
 
-  transform: translateX(-50%);
+    font-family:
+        Inter,
+        system-ui,
+        sans-serif;
 
-  z-index: 30;
+    font-size:
+        8px;
 
-  padding:
-    7px
-    13px;
+    font-weight:
+        800;
 
-  border:
-    1px solid
-    rgba(80,160,255,.15);
+    letter-spacing:
+        .24em;
 
-  border-radius: 999px;
+    white-space:
+        nowrap;
 
-  background:
-    rgba(0,0,0,.35);
+    pointer-events:
+        none;
 
-  backdrop-filter:
-    blur(12px);
-
-  -webkit-backdrop-filter:
-    blur(12px);
-
-  color:
-    rgba(180,220,255,.48);
-
-  font-size: 8px;
-  font-weight: 800;
-
-  letter-spacing:
-    .25em;
-
-  white-space: nowrap;
-
-  pointer-events: none;
+    z-index:
+        20;
 }
 
 </style>
@@ -144,17 +171,18 @@ canvas {
 
 <body>
 
-<div id="app">
+<div id="stage">
 
-  <div class="vignette"></div>
+    <div class="atmosphere"></div>
 
-  <div class="color-grade"></div>
+    <div class="vignette"></div>
 
-  <div class="label">
-    N/F · INTERACTIVE 3D
-  </div>
+    <div class="info">
+        N/F · 3D
+    </div>
 
 </div>
+
 
 
 <script type="module">
@@ -165,54 +193,59 @@ import * as THREE from
 
 
 /* =========================================================
+   STAGE
+========================================================= */
+
+const stage =
+    document.getElementById("stage");
+
+
+
+/* =========================================================
    RENDERER
 ========================================================= */
 
-const app =
-document.getElementById("app");
-
-
 const renderer =
-new THREE.WebGLRenderer({
+    new THREE.WebGLRenderer({
 
-  antialias: true,
+        antialias: true,
 
-  alpha: false,
+        alpha: true,
 
-  powerPreference:
-    "high-performance"
+        powerPreference:
+            "high-performance"
 
-});
+    });
 
 
 renderer.setSize(
-  window.innerWidth,
-  window.innerHeight
+    window.innerWidth,
+    window.innerHeight
 );
 
 
 renderer.setPixelRatio(
-  Math.min(
-    window.devicePixelRatio || 1,
-    2
-  )
+    Math.min(
+        window.devicePixelRatio || 1,
+        2
+    )
 );
 
 
 renderer.outputColorSpace =
-THREE.SRGBColorSpace;
+    THREE.SRGBColorSpace;
 
 
 renderer.toneMapping =
-THREE.ACESFilmicToneMapping;
+    THREE.ACESFilmicToneMapping;
 
 
 renderer.toneMappingExposure =
-1.12;
+    1.12;
 
 
-app.prepend(
-  renderer.domElement
+stage.prepend(
+    renderer.domElement
 );
 
 
@@ -222,11 +255,7 @@ app.prepend(
 ========================================================= */
 
 const scene =
-new THREE.Scene();
-
-
-scene.background =
-new THREE.Color(0x000000);
+    new THREE.Scene();
 
 
 
@@ -235,524 +264,882 @@ new THREE.Color(0x000000);
 ========================================================= */
 
 const camera =
-new THREE.PerspectiveCamera(
+    new THREE.PerspectiveCamera(
 
-  32,
+        30,
 
-  window.innerWidth /
-  window.innerHeight,
+        window.innerWidth /
+        window.innerHeight,
 
-  .1,
+        .1,
 
-  100
+        100
 
-);
+    );
 
 
 camera.position.set(
-  0,
-  0,
-  14
+    0,
+    0,
+    12
 );
 
 
 
 /* =========================================================
-   MAIN WORLD
+   MAIN RIG
 ========================================================= */
 
-const world =
-new THREE.Group();
+const rig =
+    new THREE.Group();
 
 
 scene.add(
-  world
+    rig
 );
 
 
 
 /* =========================================================
-   REFERENCE IMAGE
-=========================================================
-
-   Das Originalbild bleibt im Hintergrund erhalten.
-   Dadurch bleiben Berge, Personen, Atmosphäre usw.
-   exakt an der visuellen Vorlage orientiert.
-
+   ORIGINAL IMAGE
 ========================================================= */
 
-const textureLoader =
-new THREE.TextureLoader();
+const image =
+    new Image();
 
 
-const referenceTexture =
-textureLoader.load(
-
-  "IMG_2071.png",
-
-  texture => {
-
-    texture.colorSpace =
-      THREE.SRGBColorSpace;
-
-  }
-
-);
+image.crossOrigin =
+    "anonymous";
 
 
-const backgroundMaterial =
-new THREE.MeshBasicMaterial({
-
-  map:
-    referenceTexture,
-
-  transparent:
-    true,
-
-  depthWrite:
-    false
-
-});
-
-
-const background =
-new THREE.Mesh(
-
-  new THREE.PlaneGeometry(
-    16,
-    16
-  ),
-
-  backgroundMaterial
-
-);
-
-
-background.position.set(
-  0,
-  0,
-  -4
-);
-
-
-world.add(
-  background
-);
+image.src =
+    "IMG_2071.png";
 
 
 
 /* =========================================================
-   REAL 3D LOGO
+   ORIGINAL IMAGE DIMENSIONS
+
+   Your image:
+   1024 × 1536
 ========================================================= */
 
-const logo =
-new THREE.Group();
+const IMAGE_WIDTH =
+    1024;
 
-
-logo.position.set(
-  0,
-  1.45,
-  0
-);
-
-
-world.add(
-  logo
-);
+const IMAGE_HEIGHT =
+    1536;
 
 
 
 /* =========================================================
-   MATERIAL
+   LOGO BOUNDING BOX
+
+   Carefully traced from the supplied image.
 ========================================================= */
 
-const steel =
-new THREE.MeshPhysicalMaterial({
+const CROP_LEFT =
+    60;
 
-  color:
-    new THREE.Color(
-      0x9da3a7
-    ),
+const CROP_TOP =
+    175;
 
-  metalness:
-    1,
+const CROP_RIGHT =
+    965;
 
-  roughness:
-    .19,
-
-  clearcoat:
-    .55,
-
-  clearcoatRoughness:
-    .18,
-
-  reflectivity:
-    1
-
-});
+const CROP_BOTTOM =
+    805;
 
 
-const steelDark =
-new THREE.MeshPhysicalMaterial({
-
-  color:
-    new THREE.Color(
-      0x3d454b
-    ),
-
-  metalness:
-    1,
-
-  roughness:
-    .25,
-
-  clearcoat:
-    .45
-
-});
+const CROP_WIDTH =
+    CROP_RIGHT -
+    CROP_LEFT;
 
 
-const blue =
-new THREE.MeshBasicMaterial({
-
-  color:
-    0x008cff
-
-});
-
-
-const blueGlow =
-new THREE.MeshBasicMaterial({
-
-  color:
-    0x006eff,
-
-  transparent:
-    true,
-
-  opacity:
-    .32,
-
-  side:
-    THREE.DoubleSide
-
-});
+const CROP_HEIGHT =
+    CROP_BOTTOM -
+    CROP_TOP;
 
 
 
 /* =========================================================
-   LOGO SHAPE
-=========================================================
+   PRECISE LOGO MASK
 
-   Komplexere Rekonstruktion des markanten
-   N/F-Symbols.
+   Coordinates are based directly on the
+   supplied reference image.
 
+   These polygons define the actual visible
+   metal surfaces of the logo.
 ========================================================= */
 
-const N =
-[
-  [-4.8,-2.4],
-  [-3.9,-1.25],
-  [-3.15,2.65],
-  [-4.32,2.65],
+const logoPolygons = [
 
-  [-3.05,2.65],
-  [.12,-2.35],
-  [1.05,-1.55],
-  [-2.02,2.65],
+    /* ---------------------------------------------
+       MAIN DIAGONAL N
+    --------------------------------------------- */
 
-  [-.9,2.65],
-  [-.02,-1.48],
-  [.55,-2.35]
-];
+    [
+        [164,198],
+        [304,198],
+        [586,704],
+        [525,614],
+        [220,265]
+    ],
 
 
-const F_TOP =
-[
-  [.55,2.65],
-  [1.48,2.65],
-  [5.02,2.65],
-  [4.42,1.38],
-  [1.48,1.38]
-];
+    /* ---------------------------------------------
+       LEFT VERTICAL
+    --------------------------------------------- */
+
+    [
+        [228,264],
+        [264,297],
+        [219,594],
+        [78,781],
+        [101,731],
+        [216,590]
+    ],
 
 
-const F_MIDDLE =
-[
-  [1.48,.92],
-  [4.62,.92],
-  [4.02,-.08],
-  [1.48,-.08]
-];
+    /* ---------------------------------------------
+       CENTER VERTICAL
+    --------------------------------------------- */
+
+    [
+        [559,300],
+        [642,300],
+        [607,588],
+        [579,734],
+        [528,614]
+    ],
 
 
-const F_BOTTOM =
-[
-  [2.25,-.42],
-  [4.05,-.42],
-  [3.27,-1.58],
-  [2.25,-1.58]
+    /* ---------------------------------------------
+       TOP F BAR
+    --------------------------------------------- */
+
+    [
+        [566,286],
+        [642,198],
+        [947,198],
+        [861,287],
+        [858,302],
+        [555,302]
+    ],
+
+
+    /* ---------------------------------------------
+       MIDDLE F BAR
+    --------------------------------------------- */
+
+    [
+        [676,352],
+        [947,352],
+        [847,466],
+        [742,466],
+        [742,457],
+        [699,457],
+        [712,444],
+        [846,444],
+        [861,429],
+        [691,429]
+    ]
+
 ];
 
 
 
 /* =========================================================
-   CREATE EXTRUDED SHAPE
+   IMAGE → 3D COORDINATE
 ========================================================= */
 
-function createExtrudedShape(
-  points,
-  material,
-  depth
+const WORLD_WIDTH =
+    10.6;
+
+
+const SCALE =
+    WORLD_WIDTH /
+    CROP_WIDTH;
+
+
+function imageToWorldX(
+    x
 ) {
 
-  const shape =
-  new THREE.Shape();
+    return (
+        x -
+        CROP_LEFT -
+        CROP_WIDTH / 2
+    ) * SCALE;
+
+}
 
 
-  shape.moveTo(
-    points[0][0],
-    points[0][1]
-  );
+function imageToWorldY(
+    y
+) {
+
+    return -(
+        y -
+        CROP_TOP -
+        CROP_HEIGHT / 2
+    ) * SCALE;
+
+}
 
 
-  for (
-    let i = 1;
-    i < points.length;
-    i++
-  ) {
 
-    shape.lineTo(
-      points[i][0],
-      points[i][1]
+/* =========================================================
+   CREATE FRONT TEXTURE
+
+   The original image is drawn onto a transparent
+   canvas using the exact logo mask.
+
+   Therefore the front face is NOT recreated.
+   It is literally the original logo artwork.
+========================================================= */
+
+function createLogoTexture() {
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    canvas.width =
+        CROP_WIDTH;
+
+    canvas.height =
+        CROP_HEIGHT;
+
+
+    const ctx =
+        canvas.getContext(
+            "2d"
+        );
+
+
+    ctx.clearRect(
+        0,
+        0,
+        CROP_WIDTH,
+        CROP_HEIGHT
     );
 
-  }
 
+    /*
+       Draw original artwork
+    */
 
-  shape.closePath();
+    ctx.drawImage(
 
+        image,
 
-  const geometry =
-  new THREE.ExtrudeGeometry(
+        CROP_LEFT,
+        CROP_TOP,
+        CROP_WIDTH,
+        CROP_HEIGHT,
 
-    shape,
-
-    {
-
-      depth:
-        depth,
-
-      bevelEnabled:
-        true,
-
-      bevelThickness:
-        .12,
-
-      bevelSize:
-        .095,
-
-      bevelOffset:
         0,
+        0,
+        CROP_WIDTH,
+        CROP_HEIGHT
 
-      bevelSegments:
-        5,
+    );
 
-      curveSegments:
-        3
+
+    /*
+       Create mask
+    */
+
+    const mask =
+        document.createElement(
+            "canvas"
+        );
+
+
+    mask.width =
+        CROP_WIDTH;
+
+    mask.height =
+        CROP_HEIGHT;
+
+
+    const maskCtx =
+        mask.getContext(
+            "2d"
+        );
+
+
+    maskCtx.fillStyle =
+        "#ffffff";
+
+
+    logoPolygons.forEach(
+        polygon => {
+
+            maskCtx.beginPath();
+
+
+            polygon.forEach(
+                (point, index) => {
+
+                    const x =
+                        point[0] -
+                        CROP_LEFT;
+
+
+                    const y =
+                        point[1] -
+                        CROP_TOP;
+
+
+                    if (
+                        index === 0
+                    ) {
+
+                        maskCtx.moveTo(
+                            x,
+                            y
+                        );
+
+                    } else {
+
+                        maskCtx.lineTo(
+                            x,
+                            y
+                        );
+
+                    }
+
+                }
+            );
+
+
+            maskCtx.closePath();
+
+            maskCtx.fill();
+
+        }
+    );
+
+
+    /*
+       Apply alpha mask
+    */
+
+    const original =
+        ctx.getImageData(
+            0,
+            0,
+            CROP_WIDTH,
+            CROP_HEIGHT
+        );
+
+
+    const maskData =
+        maskCtx.getImageData(
+            0,
+            0,
+            CROP_WIDTH,
+            CROP_HEIGHT
+        );
+
+
+    for (
+        let i = 0;
+        i < original.data.length;
+        i += 4
+    ) {
+
+        original.data[i + 3] =
+            maskData.data[i];
 
     }
 
-  );
+
+    ctx.putImageData(
+        original,
+        0,
+        0
+    );
 
 
-  geometry.center();
+    const texture =
+        new THREE.CanvasTexture(
+            canvas
+        );
 
 
-  const mesh =
-  new THREE.Mesh(
-    geometry,
-    material
-  );
+    texture.colorSpace =
+        THREE.SRGBColorSpace;
 
 
-  mesh.castShadow =
-    true;
+    texture.anisotropy =
+        renderer.capabilities.getMaxAnisotropy();
 
 
-  mesh.receiveShadow =
-    true;
+    texture.needsUpdate =
+        true;
 
 
-  return mesh;
+    return texture;
+
 }
 
 
 
 /* =========================================================
-   LOGO PARTS
+   CREATE FRONT PLANE
 ========================================================= */
 
-const parts =
-[
-  N,
-  F_TOP,
-  F_MIDDLE,
-  F_BOTTOM
-];
-
-
-parts.forEach(
-  points => {
-
-    /*
-      Blue rear extrusion
-    */
-
-    const rear =
-    createExtrudedShape(
-      points,
-      blue,
-      .92
-    );
-
-
-    rear.position.z =
-      -.32;
-
-
-    rear.scale.set(
-      1.018,
-      1.018,
-      1
-    );
-
-
-    logo.add(
-      rear
-    );
-
-
-    /*
-      Main steel body
-    */
-
-    const body =
-    createExtrudedShape(
-      points,
-      steel,
-      .72
-    );
-
-
-    body.position.z =
-      .04;
-
-
-    logo.add(
-      body
-    );
-
-  }
-);
-
-
-
-/* =========================================================
-   BLUE LIGHT PLANE
-========================================================= */
-
-const bluePlane =
-new THREE.Mesh(
-
-  new THREE.PlaneGeometry(
-    13,
-    8
-  ),
-
-  blueGlow
-
-);
-
-
-bluePlane.position.set(
-  0,
-  .4,
-  -.75
-);
-
-
-logo.add(
-  bluePlane
-);
-
-
-
-/* =========================================================
-   EDGE LIGHT
-========================================================= */
-
-const edgeMaterial =
-new THREE.LineBasicMaterial({
-
-  color:
-    0x39adff,
-
-  transparent:
-    true,
-
-  opacity:
-    .9
-
-});
-
-
-function addEdge(
-  points
+function createFrontLogo(
+    texture
 ) {
 
-  const vertices =
-  points.map(
+    const geometry =
+        new THREE.PlaneGeometry(
 
-    point =>
-      new THREE.Vector3(
-        point[0],
-        point[1],
-        .43
-      )
+            WORLD_WIDTH,
 
-  );
+            CROP_HEIGHT * SCALE
+
+        );
 
 
-  vertices.push(
-    vertices[0]
-  );
+    const material =
+        new THREE.MeshBasicMaterial({
+
+            map:
+                texture,
+
+            transparent:
+                true,
+
+            alphaTest:
+                .01,
+
+            side:
+                THREE.DoubleSide,
+
+            depthWrite:
+                true
+
+        });
 
 
-  const geometry =
-  new THREE.BufferGeometry()
-  .setFromPoints(
-    vertices
-  );
+    const mesh =
+        new THREE.Mesh(
+            geometry,
+            material
+        );
 
 
-  const line =
-  new THREE.Line(
-    geometry,
-    edgeMaterial
-  );
+    mesh.position.z =
+        .48;
 
 
-  logo.add(
-    line
-  );
+    return mesh;
 
 }
 
 
-parts.forEach(
-  addEdge
-);
+
+/* =========================================================
+   CREATE REAL EXTRUSION
+========================================================= */
+
+function createExtrudedPart(
+    polygon
+) {
+
+    const shape =
+        new THREE.Shape();
+
+
+    polygon.forEach(
+        (point, index) => {
+
+            const x =
+                imageToWorldX(
+                    point[0]
+                );
+
+
+            const y =
+                imageToWorldY(
+                    point[1]
+                );
+
+
+            if (
+                index === 0
+            ) {
+
+                shape.moveTo(
+                    x,
+                    y
+                );
+
+            } else {
+
+                shape.lineTo(
+                    x,
+                    y
+                );
+
+            }
+
+        }
+    );
+
+
+    shape.closePath();
+
+
+    /*
+       Actual physical depth
+    */
+
+    const geometry =
+        new THREE.ExtrudeGeometry(
+
+            shape,
+
+            {
+
+                depth:
+                    .72,
+
+                bevelEnabled:
+                    true,
+
+                bevelThickness:
+                    .055,
+
+                bevelSize:
+                    .045,
+
+                bevelSegments:
+                    3,
+
+                curveSegments:
+                    2
+
+            }
+
+        );
+
+
+    geometry.translate(
+        0,
+        0,
+        -.36
+    );
+
+
+    /*
+       Side / back material
+    */
+
+    const material =
+        new THREE.MeshPhysicalMaterial({
+
+            color:
+                0x596168,
+
+            metalness:
+                1,
+
+            roughness:
+                .22,
+
+            clearcoat:
+                .35,
+
+            clearcoatRoughness:
+                .2
+
+        });
+
+
+    const mesh =
+        new THREE.Mesh(
+            geometry,
+            material
+        );
+
+
+    mesh.position.z =
+        -.05;
+
+
+    return mesh;
+
+}
+
+
+
+/* =========================================================
+   BLUE BACK EXTRUSION
+========================================================= */
+
+function createBlueExtrusion(
+    polygon
+) {
+
+    const shape =
+        new THREE.Shape();
+
+
+    polygon.forEach(
+        (point, index) => {
+
+            const x =
+                imageToWorldX(
+                    point[0]
+                );
+
+
+            const y =
+                imageToWorldY(
+                    point[1]
+                );
+
+
+            if (
+                index === 0
+            ) {
+
+                shape.moveTo(
+                    x,
+                    y
+                );
+
+            } else {
+
+                shape.lineTo(
+                    x,
+                    y
+                );
+
+            }
+
+        }
+    );
+
+
+    shape.closePath();
+
+
+    const geometry =
+        new THREE.ExtrudeGeometry(
+
+            shape,
+
+            {
+
+                depth:
+                    .18,
+
+                bevelEnabled:
+                    false
+
+            }
+
+        );
+
+
+    geometry.translate(
+        0,
+        0,
+        -.09
+    );
+
+
+    const material =
+        new THREE.MeshBasicMaterial({
+
+            color:
+                0x008cff,
+
+            transparent:
+                true,
+
+            opacity:
+                .95
+
+        });
+
+
+    const mesh =
+        new THREE.Mesh(
+            geometry,
+            material
+        );
+
+
+    mesh.position.z =
+        -.47;
+
+
+    return mesh;
+
+}
+
+
+
+/* =========================================================
+   BLUE OUTER GLOW
+========================================================= */
+
+function createGlow(
+    polygon
+) {
+
+    const points =
+        polygon.map(
+            point => {
+
+                return new THREE.Vector3(
+
+                    imageToWorldX(
+                        point[0]
+                    ),
+
+                    imageToWorldY(
+                        point[1]
+                    ),
+
+                    -.53
+
+                );
+
+            }
+        );
+
+
+    points.push(
+        points[0].clone()
+    );
+
+
+    const geometry =
+        new THREE.BufferGeometry()
+        .setFromPoints(
+            points
+        );
+
+
+    const material =
+        new THREE.LineBasicMaterial({
+
+            color:
+                0x008cff,
+
+            transparent:
+                true,
+
+            opacity:
+                .9
+
+        });
+
+
+    const line =
+        new THREE.Line(
+            geometry,
+            material
+        );
+
+
+    return line;
+
+}
+
+
+
+/* =========================================================
+   BUILD 3D LOGO
+========================================================= */
+
+image.onload =
+() => {
+
+    /*
+       Exact original front
+    */
+
+    const texture =
+        createLogoTexture();
+
+
+    const front =
+        createFrontLogo(
+            texture
+        );
+
+
+    rig.add(
+        front
+    );
+
+
+    /*
+       Real 3D extrusion
+    */
+
+    logoPolygons.forEach(
+        polygon => {
+
+            const extrusion =
+                createExtrudedPart(
+                    polygon
+                );
+
+
+            rig.add(
+                extrusion
+            );
+
+
+            /*
+               Blue rear layer
+            */
+
+            const blue =
+                createBlueExtrusion(
+                    polygon
+                );
+
+
+            rig.add(
+                blue
+            );
+
+
+            /*
+               Blue edge
+            */
+
+            const glow =
+                createGlow(
+                    polygon
+                );
+
+
+            rig.add(
+                glow
+            );
+
+        }
+    );
+
+
+    start();
+
+};
 
 
 
@@ -760,94 +1147,91 @@ parts.forEach(
    LIGHTING
 ========================================================= */
 
-scene.add(
+const ambient =
+    new THREE.HemisphereLight(
 
-  new THREE.HemisphereLight(
-    0x9bcfff,
-    0x020304,
-    .9
-  )
+        0xb8dcff,
 
-);
+        0x010203,
 
+        .8
 
-
-const keyLight =
-new THREE.DirectionalLight(
-  0xffffff,
-  4.5
-);
-
-
-keyLight.position.set(
-  -4,
-  7,
-  8
-);
+    );
 
 
 scene.add(
-  keyLight
+    ambient
 );
 
 
 
-const blueLight =
-new THREE.DirectionalLight(
-  0x008cff,
-  5
-);
+const key =
+    new THREE.DirectionalLight(
+
+        0xffffff,
+
+        4.2
+
+    );
 
 
-blueLight.position.set(
-  6,
-  2,
-  3
+key.position.set(
+    -4,
+    7,
+    8
 );
 
 
 scene.add(
-  blueLight
+    key
+);
+
+
+
+const cold =
+    new THREE.DirectionalLight(
+
+        0x3aa7ff,
+
+        4.5
+
+    );
+
+
+cold.position.set(
+    6,
+    2,
+    4
+);
+
+
+scene.add(
+    cold
 );
 
 
 
 const bluePoint =
-new THREE.PointLight(
-  0x007cff,
-  25,
-  14
-);
+    new THREE.PointLight(
+
+        0x008cff,
+
+        22,
+
+        14
+
+    );
 
 
 bluePoint.position.set(
-  0,
-  1,
-  5
+    0,
+    0,
+    4
 );
 
 
 scene.add(
-  bluePoint
-);
-
-
-
-/* =========================================================
-   CAMERA DEPTH
-========================================================= */
-
-const cameraRig =
-new THREE.Group();
-
-
-cameraRig.add(
-  camera
-);
-
-
-scene.add(
-  cameraRig
+    bluePoint
 );
 
 
@@ -857,133 +1241,137 @@ scene.add(
 ========================================================= */
 
 let dragging =
-false;
+    false;
 
 
-let pointerX =
-0;
+let lastX =
+    0;
 
 
-let pointerY =
-0;
+let lastY =
+    0;
 
 
-let targetRotationY =
-0;
+let targetY =
+    0;
 
 
-let targetRotationX =
-0;
+let targetX =
+    0;
 
 
-let rotationY =
-0;
+let currentY =
+    0;
 
 
-let rotationX =
-0;
+let currentX =
+    0;
 
 
 let lastInteraction =
-0;
+    0;
 
 
 
-app.addEventListener(
-  "pointerdown",
-  event => {
+stage.addEventListener(
+    "pointerdown",
+    event => {
 
-    dragging =
-      true;
+        dragging =
+            true;
 
-    pointerX =
-      event.clientX;
 
-    pointerY =
-      event.clientY;
+        lastX =
+            event.clientX;
 
-    lastInteraction =
-      performance.now();
 
-    app.setPointerCapture(
-      event.pointerId
-    );
+        lastY =
+            event.clientY;
 
-  }
+
+        lastInteraction =
+            performance.now();
+
+
+        stage.setPointerCapture(
+            event.pointerId
+        );
+
+    }
 );
 
 
 
-app.addEventListener(
-  "pointermove",
-  event => {
+stage.addEventListener(
+    "pointermove",
+    event => {
 
-    if (!dragging)
-      return;
-
-
-    const dx =
-      event.clientX -
-      pointerX;
+        if (!dragging)
+            return;
 
 
-    const dy =
-      event.clientY -
-      pointerY;
+        const dx =
+            event.clientX -
+            lastX;
 
 
-    targetRotationY +=
-      dx * .007;
+        const dy =
+            event.clientY -
+            lastY;
 
 
-    targetRotationX +=
-      dy * .004;
+        targetY +=
+            dx * .006;
 
 
-    targetRotationX =
-      THREE.MathUtils.clamp(
-        targetRotationX,
-        -.22,
-        .22
-      );
+        targetX +=
+            dy * .003;
 
 
-    pointerX =
-      event.clientX;
+        targetX =
+            THREE.MathUtils.clamp(
+                targetX,
+                -.25,
+                .25
+            );
 
 
-    pointerY =
-      event.clientY;
+        lastX =
+            event.clientX;
 
 
-    lastInteraction =
-      performance.now();
+        lastY =
+            event.clientY;
 
-  }
+
+        lastInteraction =
+            performance.now();
+
+    }
 );
 
 
 
-app.addEventListener(
-  "pointerup",
-  () => {
+stage.addEventListener(
+    "pointerup",
+    () => {
 
-    dragging =
-      false;
+        dragging =
+            false;
 
-  }
+    }
 );
 
 
 
-app.addEventListener(
-  "pointercancel",
-  () => {
+stage.addEventListener(
+    "pointercancel",
+    () => {
 
-    dragging =
-      false;
+        dragging =
+            false;
 
-  }
+    }
 );
 
 
@@ -993,179 +1381,146 @@ app.addEventListener(
 ========================================================= */
 
 const clock =
-new THREE.Clock();
+    new THREE.Clock();
 
 
-function animate() {
+function start() {
 
-  requestAnimationFrame(
-    animate
-  );
-
-
-  const t =
-  clock.getElapsedTime();
-
-
-  const idle =
-  performance.now() -
-  lastInteraction >
-  1800;
-
-
-  /*
-    Automatische Rotation
-  */
-
-  const autoY =
-    idle
-      ? Math.sin(
-          t * .32
-        ) * .13
-      : 0;
-
-
-  const autoX =
-    idle
-      ? Math.sin(
-          t * .24
-        ) * .025
-      : 0;
-
-
-  const desiredY =
-    targetRotationY +
-    autoY;
-
-
-  const desiredX =
-    targetRotationX +
-    autoX;
-
-
-  rotationY +=
-    (
-      desiredY -
-      rotationY
-    ) * .045;
-
-
-  rotationX +=
-    (
-      desiredX -
-      rotationX
-    ) * .045;
-
-
-
-  /*
-    Logo Rotation
-  */
-
-  logo.rotation.y =
-    rotationY;
-
-
-  logo.rotation.x =
-    rotationX;
-
-
-  logo.rotation.z =
-    Math.sin(
-      t * .3
-    ) * .008;
-
-
-
-  /*
-    Kamera bewegt sich minimal
-  */
-
-  cameraRig.position.x =
-    Math.sin(
-      t * .19
-    ) * .035;
-
-
-  cameraRig.position.y =
-    Math.sin(
-      t * .23
-    ) * .025;
-
-
-
-  /*
-    Blue Light Pulse
-  */
-
-  bluePoint.intensity =
-    22 +
-    Math.sin(
-      t * .8
-    ) * 4;
-
-
-
-  /*
-    Background Parallax
-  */
-
-  background.position.x =
-    Math.sin(
-      t * .16
-    ) * .08;
-
-
-  background.position.y =
-    Math.cos(
-      t * .13
-    ) * .035;
-
-
-
-  renderer.render(
-    scene,
-    camera
-  );
+    animate();
 
 }
 
 
-animate();
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    const t =
+        clock.getElapsedTime();
+
+
+    const idle =
+        performance.now() -
+        lastInteraction >
+        1800;
+
+
+    /*
+       Slow premium rotation
+    */
+
+    const automaticY =
+        idle
+            ? Math.sin(
+                t * .30
+              ) * .105
+            : 0;
+
+
+    const automaticX =
+        idle
+            ? Math.sin(
+                t * .22
+              ) * .018
+            : 0;
+
+
+    const desiredY =
+        targetY +
+        automaticY;
+
+
+    const desiredX =
+        targetX +
+        automaticX;
+
+
+    currentY +=
+        (
+            desiredY -
+            currentY
+        ) * .045;
+
+
+    currentX +=
+        (
+            desiredX -
+            currentX
+        ) * .045;
+
+
+    rig.rotation.y =
+        currentY;
+
+
+    rig.rotation.x =
+        currentX;
+
+
+    /*
+       Very subtle floating movement
+    */
+
+    rig.position.y =
+        Math.sin(
+            t * .45
+        ) * .025;
+
+
+    /*
+       Blue light breathing
+    */
+
+    bluePoint.intensity =
+        20 +
+        Math.sin(
+            t * .8
+        ) * 4;
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
 
 
 
 /* =========================================================
-   RESIZE
+   RESPONSIVE
 ========================================================= */
 
 window.addEventListener(
-  "resize",
-  () => {
+    "resize",
+    () => {
 
-    camera.aspect =
-      window.innerWidth /
-      window.innerHeight;
-
-
-    camera.updateProjectionMatrix();
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
 
 
-    renderer.setSize(
-      window.innerWidth,
-      window.innerHeight
-    );
+        camera.updateProjectionMatrix();
 
 
-    renderer.setPixelRatio(
-      Math.min(
-        window.devicePixelRatio || 1,
-        2
-      )
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
 
-    );
 
-  }
+        renderer.setPixelRatio(
+            Math.min(
+                window.devicePixelRatio || 1,
+                2
+            )
+        );
+
+    }
 );
 
 </script>
