@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-/>
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1,
+               maximum-scale=1,
+               user-scalable=no">
 
-<title>N/F — Exact 3D Reconstruction</title>
+<title>N/F — 3D</title>
 
 <style>
 
@@ -18,39 +19,32 @@
 
 html,
 body {
+    margin: 0;
     width: 100%;
     height: 100%;
-    margin: 0;
     overflow: hidden;
     background: #000;
 }
 
 body {
-    background:
-        radial-gradient(
-            ellipse at center,
-            #07111a 0%,
-            #020407 48%,
-            #000000 100%
-        );
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 }
 
-#stage {
+#app {
     position: fixed;
     inset: 0;
-
-    width: 100%;
-    height: 100%;
-
     overflow: hidden;
-
-    touch-action: none;
-
-    cursor: grab;
-}
-
-#stage:active {
-    cursor: grabbing;
+    background:
+        radial-gradient(
+            ellipse at 50% 45%,
+            #07111a 0%,
+            #020509 45%,
+            #000 78%
+        );
 }
 
 canvas {
@@ -59,130 +53,105 @@ canvas {
     height: 100%;
 }
 
-
-/* -------------------------------------------------------
-   CINEMATIC ATMOSPHERE
-------------------------------------------------------- */
-
-.atmosphere {
-    position: absolute;
-
-    width: 80vw;
-    height: 70vh;
-
-    left: 50%;
-    top: 44%;
-
-    transform:
-        translate(-50%, -50%);
-
-    background:
-        radial-gradient(
-            ellipse,
-            rgba(0, 105, 255, .12),
-            rgba(0, 50, 130, .035) 42%,
-            transparent 72%
-        );
-
-    filter: blur(40px);
-
-    pointer-events: none;
-
-    z-index: 5;
-}
-
-
 .vignette {
-    position: absolute;
+    position: fixed;
     inset: 0;
-
     pointer-events: none;
+    z-index: 10;
 
     background:
         radial-gradient(
             ellipse at center,
-            transparent 38%,
-            rgba(0,0,0,.18) 60%,
-            rgba(0,0,0,.82) 100%
+            transparent 42%,
+            rgba(0,0,0,.18) 63%,
+            rgba(0,0,0,.72) 100%
         );
-
-    z-index: 10;
 }
 
-
-.info {
-    position: absolute;
+.glow {
+    position: fixed;
 
     left: 50%;
-    bottom: 18px;
+    top: 43%;
+
+    width: 75vw;
+    height: 55vh;
+
+    transform:
+        translate(-50%, -50%);
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            ellipse,
+            rgba(0,110,255,.10),
+            transparent 68%
+        );
+
+    filter: blur(45px);
+
+    z-index: 2;
+}
+
+.badge {
+    position: fixed;
+
+    left: 50%;
+    bottom: 24px;
 
     transform:
         translateX(-50%);
 
     padding:
-        7px 13px;
+        8px 15px;
 
     border:
         1px solid
-        rgba(70,170,255,.18);
+        rgba(70,150,255,.18);
 
     border-radius:
         999px;
 
+    color:
+        rgba(190,220,255,.48);
+
     background:
-        rgba(0,5,10,.42);
+        rgba(0,0,0,.30);
 
     backdrop-filter:
-        blur(10px);
+        blur(12px);
 
     -webkit-backdrop-filter:
-        blur(10px);
+        blur(12px);
 
-    color:
-        rgba(180,220,255,.5);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .22em;
 
-    font-family:
-        Inter,
-        system-ui,
-        sans-serif;
+    z-index: 20;
 
-    font-size:
-        8px;
+    white-space: nowrap;
 
-    font-weight:
-        800;
-
-    letter-spacing:
-        .24em;
-
-    white-space:
-        nowrap;
-
-    pointer-events:
-        none;
-
-    z-index:
-        20;
+    pointer-events: none;
 }
 
 </style>
 </head>
 
-
 <body>
 
-<div id="stage">
+<div id="app">
 
-    <div class="atmosphere"></div>
+    <div class="glow"></div>
 
     <div class="vignette"></div>
 
-    <div class="info">
-        N/F · 3D
+    <div class="badge">
+        N/F · DRAG TO ROTATE
     </div>
 
 </div>
-
 
 
 <script type="module">
@@ -191,37 +160,20 @@ import * as THREE from
 "https://esm.sh/three@0.165.0";
 
 
+/* =====================================================
+   SETUP
+===================================================== */
 
-/* =========================================================
-   STAGE
-========================================================= */
+const app =
+    document.getElementById("app");
 
-const stage =
-    document.getElementById("stage");
-
-
-
-/* =========================================================
-   RENDERER
-========================================================= */
 
 const renderer =
     new THREE.WebGLRenderer({
-
         antialias: true,
-
         alpha: true,
-
-        powerPreference:
-            "high-performance"
-
+        powerPreference: "high-performance"
     });
-
-
-renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-);
 
 
 renderer.setPixelRatio(
@@ -229,6 +181,12 @@ renderer.setPixelRatio(
         window.devicePixelRatio || 1,
         2
     )
+);
+
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
 );
 
 
@@ -241,68 +199,75 @@ renderer.toneMapping =
 
 
 renderer.toneMappingExposure =
-    1.12;
+    1.15;
 
 
-stage.prepend(
+app.appendChild(
     renderer.domElement
 );
 
 
 
-/* =========================================================
+/* =====================================================
    SCENE
-========================================================= */
+===================================================== */
 
 const scene =
     new THREE.Scene();
 
 
-
-/* =========================================================
-   CAMERA
-========================================================= */
-
 const camera =
     new THREE.PerspectiveCamera(
-
-        30,
-
+        27,
         window.innerWidth /
         window.innerHeight,
-
         .1,
-
         100
-
     );
 
 
-camera.position.set(
-    0,
-    0,
-    12
-);
+camera.position.z =
+    14;
 
 
 
-/* =========================================================
-   MAIN RIG
-========================================================= */
+/* =====================================================
+   MASTER GROUP
+===================================================== */
 
-const rig =
+const logoGroup =
     new THREE.Group();
 
 
 scene.add(
-    rig
+    logoGroup
 );
 
 
+/*
+    This is deliberately MUCH smaller
+    than the previous version.
+*/
 
-/* =========================================================
+logoGroup.scale.set(
+    .78,
+    .78,
+    .78
+);
+
+
+/*
+    Vertical positioning.
+*/
+
+logoGroup.position.y =
+    .55;
+
+
+
+/* =====================================================
    ORIGINAL IMAGE
-========================================================= */
+===================================================== */
 
 const image =
     new Image();
@@ -316,190 +281,22 @@ image.src =
     "IMG_2071.png";
 
 
+/* =====================================================
+   IMAGE → LOGO EXTRACTION
+===================================================== */
 
-/* =========================================================
-   ORIGINAL IMAGE DIMENSIONS
+/*
+   Instead of manually recreating the logo,
+   we take the actual pixels from your artwork.
 
-   Your image:
-   1024 × 1536
-========================================================= */
+   The original picture has a very bright metallic
+   logo against a predominantly dark environment.
 
-const IMAGE_WIDTH =
-    1024;
+   Therefore we use brightness + saturation +
+   position to isolate the logo.
+*/
 
-const IMAGE_HEIGHT =
-    1536;
-
-
-
-/* =========================================================
-   LOGO BOUNDING BOX
-
-   Carefully traced from the supplied image.
-========================================================= */
-
-const CROP_LEFT =
-    60;
-
-const CROP_TOP =
-    175;
-
-const CROP_RIGHT =
-    965;
-
-const CROP_BOTTOM =
-    805;
-
-
-const CROP_WIDTH =
-    CROP_RIGHT -
-    CROP_LEFT;
-
-
-const CROP_HEIGHT =
-    CROP_BOTTOM -
-    CROP_TOP;
-
-
-
-/* =========================================================
-   PRECISE LOGO MASK
-
-   Coordinates are based directly on the
-   supplied reference image.
-
-   These polygons define the actual visible
-   metal surfaces of the logo.
-========================================================= */
-
-const logoPolygons = [
-
-    /* ---------------------------------------------
-       MAIN DIAGONAL N
-    --------------------------------------------- */
-
-    [
-        [164,198],
-        [304,198],
-        [586,704],
-        [525,614],
-        [220,265]
-    ],
-
-
-    /* ---------------------------------------------
-       LEFT VERTICAL
-    --------------------------------------------- */
-
-    [
-        [228,264],
-        [264,297],
-        [219,594],
-        [78,781],
-        [101,731],
-        [216,590]
-    ],
-
-
-    /* ---------------------------------------------
-       CENTER VERTICAL
-    --------------------------------------------- */
-
-    [
-        [559,300],
-        [642,300],
-        [607,588],
-        [579,734],
-        [528,614]
-    ],
-
-
-    /* ---------------------------------------------
-       TOP F BAR
-    --------------------------------------------- */
-
-    [
-        [566,286],
-        [642,198],
-        [947,198],
-        [861,287],
-        [858,302],
-        [555,302]
-    ],
-
-
-    /* ---------------------------------------------
-       MIDDLE F BAR
-    --------------------------------------------- */
-
-    [
-        [676,352],
-        [947,352],
-        [847,466],
-        [742,466],
-        [742,457],
-        [699,457],
-        [712,444],
-        [846,444],
-        [861,429],
-        [691,429]
-    ]
-
-];
-
-
-
-/* =========================================================
-   IMAGE → 3D COORDINATE
-========================================================= */
-
-const WORLD_WIDTH =
-    10.6;
-
-
-const SCALE =
-    WORLD_WIDTH /
-    CROP_WIDTH;
-
-
-function imageToWorldX(
-    x
-) {
-
-    return (
-        x -
-        CROP_LEFT -
-        CROP_WIDTH / 2
-    ) * SCALE;
-
-}
-
-
-function imageToWorldY(
-    y
-) {
-
-    return -(
-        y -
-        CROP_TOP -
-        CROP_HEIGHT / 2
-    ) * SCALE;
-
-}
-
-
-
-/* =========================================================
-   CREATE FRONT TEXTURE
-
-   The original image is drawn onto a transparent
-   canvas using the exact logo mask.
-
-   Therefore the front face is NOT recreated.
-   It is literally the original logo artwork.
-========================================================= */
-
-function createLogoTexture() {
+function buildLogoTexture() {
 
     const canvas =
         document.createElement(
@@ -507,11 +304,40 @@ function createLogoTexture() {
         );
 
 
+    /*
+       Original artwork:
+       1024 × 1536
+    */
+
+    const sourceWidth =
+        1024;
+
+    const sourceHeight =
+        1536;
+
+
+    /*
+       Logo occupies roughly the upper half.
+    */
+
+    const cropX =
+        45;
+
+    const cropY =
+        165;
+
+    const cropWidth =
+        935;
+
+    const cropHeight =
+        670;
+
+
     canvas.width =
-        CROP_WIDTH;
+        cropWidth;
 
     canvas.height =
-        CROP_HEIGHT;
+        cropHeight;
 
 
     const ctx =
@@ -520,147 +346,140 @@ function createLogoTexture() {
         );
 
 
-    ctx.clearRect(
-        0,
-        0,
-        CROP_WIDTH,
-        CROP_HEIGHT
-    );
-
-
-    /*
-       Draw original artwork
-    */
-
     ctx.drawImage(
-
         image,
 
-        CROP_LEFT,
-        CROP_TOP,
-        CROP_WIDTH,
-        CROP_HEIGHT,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
 
         0,
         0,
-        CROP_WIDTH,
-        CROP_HEIGHT
-
+        cropWidth,
+        cropHeight
     );
 
 
-    /*
-       Create mask
-    */
-
-    const mask =
-        document.createElement(
-            "canvas"
-        );
-
-
-    mask.width =
-        CROP_WIDTH;
-
-    mask.height =
-        CROP_HEIGHT;
-
-
-    const maskCtx =
-        mask.getContext(
-            "2d"
-        );
-
-
-    maskCtx.fillStyle =
-        "#ffffff";
-
-
-    logoPolygons.forEach(
-        polygon => {
-
-            maskCtx.beginPath();
-
-
-            polygon.forEach(
-                (point, index) => {
-
-                    const x =
-                        point[0] -
-                        CROP_LEFT;
-
-
-                    const y =
-                        point[1] -
-                        CROP_TOP;
-
-
-                    if (
-                        index === 0
-                    ) {
-
-                        maskCtx.moveTo(
-                            x,
-                            y
-                        );
-
-                    } else {
-
-                        maskCtx.lineTo(
-                            x,
-                            y
-                        );
-
-                    }
-
-                }
-            );
-
-
-            maskCtx.closePath();
-
-            maskCtx.fill();
-
-        }
-    );
-
-
-    /*
-       Apply alpha mask
-    */
-
-    const original =
+    const pixels =
         ctx.getImageData(
             0,
             0,
-            CROP_WIDTH,
-            CROP_HEIGHT
+            cropWidth,
+            cropHeight
         );
 
 
-    const maskData =
-        maskCtx.getImageData(
-            0,
-            0,
-            CROP_WIDTH,
-            CROP_HEIGHT
-        );
+    const data =
+        pixels.data;
 
+
+    /*
+       Create a soft logo mask.
+
+       Bright metallic pixels are preserved.
+       Dark mountain/person pixels are removed.
+    */
 
     for (
         let i = 0;
-        i < original.data.length;
+        i < data.length;
         i += 4
     ) {
 
-        original.data[i + 3] =
-            maskData.data[i];
+        const r =
+            data[i];
+
+        const g =
+            data[i + 1];
+
+        const b =
+            data[i + 2];
+
+
+        const brightness =
+            (
+                r * .299 +
+                g * .587 +
+                b * .114
+            );
+
+
+        const blue =
+            b - (
+                (r + g) / 2
+            );
+
+
+        /*
+           Metallic silver:
+           bright and relatively neutral.
+        */
+
+        let alpha = 0;
+
+
+        if (
+            brightness > 105 &&
+            Math.abs(blue) < 70
+        ) {
+
+            alpha =
+                Math.min(
+                    255,
+                    (
+                        brightness - 85
+                    ) * 3.0
+                );
+
+        }
+
+
+        /*
+           Blue illuminated edges.
+        */
+
+        if (
+            blue > 18 &&
+            brightness > 55
+        ) {
+
+            alpha =
+                Math.max(
+                    alpha,
+                    Math.min(
+                        255,
+                        (
+                            brightness - 40
+                        ) * 2.4
+                    )
+                );
+
+        }
+
+
+        /*
+           Remove very dark pixels.
+        */
+
+        if (
+            brightness < 70
+        ) {
+
+            alpha =
+                0;
+
+        }
+
+
+        data[i + 3] =
+            alpha;
 
     }
 
 
     ctx.putImageData(
-        original,
+        pixels,
         0,
         0
     );
@@ -677,34 +496,58 @@ function createLogoTexture() {
 
 
     texture.anisotropy =
-        renderer.capabilities.getMaxAnisotropy();
+        renderer
+        .capabilities
+        .getMaxAnisotropy();
 
 
-    texture.needsUpdate =
-        true;
+    texture.minFilter =
+        THREE.LinearMipmapLinearFilter;
 
 
-    return texture;
+    texture.magFilter =
+        THREE.LinearFilter;
+
+
+    return {
+        texture,
+        width: cropWidth,
+        height: cropHeight
+    };
 
 }
 
 
 
-/* =========================================================
-   CREATE FRONT PLANE
-========================================================= */
+/* =====================================================
+   CREATE FRONT FACE
+===================================================== */
 
-function createFrontLogo(
-    texture
+function createFront(
+    result
 ) {
+
+    const aspect =
+        result.width /
+        result.height;
+
+
+    /*
+       Reasonable physical size.
+    */
+
+    const height =
+        6.4;
+
+
+    const width =
+        height * aspect;
+
 
     const geometry =
         new THREE.PlaneGeometry(
-
-            WORLD_WIDTH,
-
-            CROP_HEIGHT * SCALE
-
+            width,
+            height
         );
 
 
@@ -712,13 +555,13 @@ function createFrontLogo(
         new THREE.MeshBasicMaterial({
 
             map:
-                texture,
+                result.texture,
 
             transparent:
                 true,
 
             alphaTest:
-                .01,
+                .015,
 
             side:
                 THREE.DoubleSide,
@@ -737,7 +580,7 @@ function createFrontLogo(
 
 
     mesh.position.z =
-        .48;
+        .34;
 
 
     return mesh;
@@ -746,120 +589,50 @@ function createFrontLogo(
 
 
 
-/* =========================================================
-   CREATE REAL EXTRUSION
-========================================================= */
+/* =====================================================
+   CREATE DEPTH LAYER
+===================================================== */
 
-function createExtrudedPart(
-    polygon
+function createDepthLayer(
+    texture,
+    width,
+    height,
+    z,
+    darken
 ) {
 
-    const shape =
-        new THREE.Shape();
-
-
-    polygon.forEach(
-        (point, index) => {
-
-            const x =
-                imageToWorldX(
-                    point[0]
-                );
-
-
-            const y =
-                imageToWorldY(
-                    point[1]
-                );
-
-
-            if (
-                index === 0
-            ) {
-
-                shape.moveTo(
-                    x,
-                    y
-                );
-
-            } else {
-
-                shape.lineTo(
-                    x,
-                    y
-                );
-
-            }
-
-        }
-    );
-
-
-    shape.closePath();
-
-
-    /*
-       Actual physical depth
-    */
-
     const geometry =
-        new THREE.ExtrudeGeometry(
-
-            shape,
-
-            {
-
-                depth:
-                    .72,
-
-                bevelEnabled:
-                    true,
-
-                bevelThickness:
-                    .055,
-
-                bevelSize:
-                    .045,
-
-                bevelSegments:
-                    3,
-
-                curveSegments:
-                    2
-
-            }
-
+        new THREE.PlaneGeometry(
+            width,
+            height
         );
 
-
-    geometry.translate(
-        0,
-        0,
-        -.36
-    );
-
-
-    /*
-       Side / back material
-    */
 
     const material =
         new THREE.MeshPhysicalMaterial({
 
+            map:
+                texture,
+
+            transparent:
+                true,
+
+            alphaTest:
+                .015,
+
             color:
-                0x596168,
+                new THREE.Color(
+                    darken
+                ),
 
             metalness:
                 1,
 
             roughness:
-                .22,
+                .27,
 
-            clearcoat:
-                .35,
-
-            clearcoatRoughness:
-                .2
+            side:
+                THREE.DoubleSide
 
         });
 
@@ -872,7 +645,7 @@ function createExtrudedPart(
 
 
     mesh.position.z =
-        -.05;
+        z;
 
 
     return mesh;
@@ -881,94 +654,36 @@ function createExtrudedPart(
 
 
 
-/* =========================================================
-   BLUE BACK EXTRUSION
-========================================================= */
+/* =====================================================
+   CREATE BLUE BACKING
+===================================================== */
 
-function createBlueExtrusion(
-    polygon
+function createBlueBacking(
+    width,
+    height
 ) {
 
-    const shape =
-        new THREE.Shape();
-
-
-    polygon.forEach(
-        (point, index) => {
-
-            const x =
-                imageToWorldX(
-                    point[0]
-                );
-
-
-            const y =
-                imageToWorldY(
-                    point[1]
-                );
-
-
-            if (
-                index === 0
-            ) {
-
-                shape.moveTo(
-                    x,
-                    y
-                );
-
-            } else {
-
-                shape.lineTo(
-                    x,
-                    y
-                );
-
-            }
-
-        }
-    );
-
-
-    shape.closePath();
-
-
     const geometry =
-        new THREE.ExtrudeGeometry(
-
-            shape,
-
-            {
-
-                depth:
-                    .18,
-
-                bevelEnabled:
-                    false
-
-            }
-
+        new THREE.PlaneGeometry(
+            width * 1.005,
+            height * 1.005
         );
-
-
-    geometry.translate(
-        0,
-        0,
-        -.09
-    );
 
 
     const material =
         new THREE.MeshBasicMaterial({
 
             color:
-                0x008cff,
+                0x006eff,
 
             transparent:
                 true,
 
             opacity:
-                .95
+                .88,
+
+            side:
+                THREE.DoubleSide
 
         });
 
@@ -981,7 +696,7 @@ function createBlueExtrusion(
 
 
     mesh.position.z =
-        -.47;
+        -.34;
 
 
     return mesh;
@@ -990,172 +705,134 @@ function createBlueExtrusion(
 
 
 
-/* =========================================================
-   BLUE OUTER GLOW
-========================================================= */
-
-function createGlow(
-    polygon
-) {
-
-    const points =
-        polygon.map(
-            point => {
-
-                return new THREE.Vector3(
-
-                    imageToWorldX(
-                        point[0]
-                    ),
-
-                    imageToWorldY(
-                        point[1]
-                    ),
-
-                    -.53
-
-                );
-
-            }
-        );
-
-
-    points.push(
-        points[0].clone()
-    );
-
-
-    const geometry =
-        new THREE.BufferGeometry()
-        .setFromPoints(
-            points
-        );
-
-
-    const material =
-        new THREE.LineBasicMaterial({
-
-            color:
-                0x008cff,
-
-            transparent:
-                true,
-
-            opacity:
-                .9
-
-        });
-
-
-    const line =
-        new THREE.Line(
-            geometry,
-            material
-        );
-
-
-    return line;
-
-}
-
-
-
-/* =========================================================
-   BUILD 3D LOGO
-========================================================= */
+/* =====================================================
+   BUILD
+===================================================== */
 
 image.onload =
 () => {
 
+    const result =
+        buildLogoTexture();
+
+
     /*
-       Exact original front
+       Calculate dimensions.
     */
 
-    const texture =
-        createLogoTexture();
+    const aspect =
+        result.width /
+        result.height;
 
+
+    const height =
+        6.4;
+
+
+    const width =
+        height * aspect;
+
+
+    /*
+       Blue rear plate.
+    */
+
+    logoGroup.add(
+        createBlueBacking(
+            width,
+            height
+        )
+    );
+
+
+    /*
+       Multiple depth layers.
+
+       These are very close together,
+       creating believable physical depth
+       without destroying the original artwork.
+    */
+
+    const depthSteps =
+        12;
+
+
+    for (
+        let i = 0;
+        i < depthSteps;
+        i++
+    ) {
+
+        const z =
+            -.30 +
+            (
+                i *
+                .048
+            );
+
+
+        const layer =
+            createDepthLayer(
+
+                result.texture,
+
+                width,
+                height,
+
+                z,
+
+                0.22 +
+                i * .018
+
+            );
+
+
+        /*
+           Darker layers are behind
+           the actual front artwork.
+        */
+
+        logoGroup.add(
+            layer
+        );
+
+    }
+
+
+    /*
+       Exact original front.
+    */
 
     const front =
-        createFrontLogo(
-            texture
+        createFront(
+            result
         );
 
 
-    rig.add(
+    logoGroup.add(
         front
     );
 
 
     /*
-       Real 3D extrusion
+       Start animation.
     */
 
-    logoPolygons.forEach(
-        polygon => {
-
-            const extrusion =
-                createExtrudedPart(
-                    polygon
-                );
-
-
-            rig.add(
-                extrusion
-            );
-
-
-            /*
-               Blue rear layer
-            */
-
-            const blue =
-                createBlueExtrusion(
-                    polygon
-                );
-
-
-            rig.add(
-                blue
-            );
-
-
-            /*
-               Blue edge
-            */
-
-            const glow =
-                createGlow(
-                    polygon
-                );
-
-
-            rig.add(
-                glow
-            );
-
-        }
-    );
-
-
-    start();
+    animate();
 
 };
 
 
 
-/* =========================================================
+/* =====================================================
    LIGHTING
-========================================================= */
+===================================================== */
 
 const ambient =
     new THREE.HemisphereLight(
-
-        0xb8dcff,
-
-        0x010203,
-
-        .8
-
+        0x9fcfff,
+        0x020304,
+        .9
     );
 
 
@@ -1164,66 +841,53 @@ scene.add(
 );
 
 
-
-const key =
+const whiteLight =
     new THREE.DirectionalLight(
-
         0xffffff,
-
-        4.2
-
+        3.4
     );
 
 
-key.position.set(
-    -4,
-    7,
+whiteLight.position.set(
+    -5,
+    5,
     8
 );
 
 
 scene.add(
-    key
+    whiteLight
 );
 
 
-
-const cold =
+const blueLight =
     new THREE.DirectionalLight(
-
-        0x3aa7ff,
-
-        4.5
-
+        0x168cff,
+        3.8
     );
 
 
-cold.position.set(
+blueLight.position.set(
     6,
-    2,
-    4
+    1,
+    5
 );
 
 
 scene.add(
-    cold
+    blueLight
 );
 
 
-
-const bluePoint =
+const rimLight =
     new THREE.PointLight(
-
         0x008cff,
-
-        22,
-
-        14
-
+        16,
+        15
     );
 
 
-bluePoint.position.set(
+rimLight.position.set(
     0,
     0,
     4
@@ -1231,14 +895,14 @@ bluePoint.position.set(
 
 
 scene.add(
-    bluePoint
+    rimLight
 );
 
 
 
-/* =========================================================
+/* =====================================================
    INTERACTION
-========================================================= */
+===================================================== */
 
 let dragging =
     false;
@@ -1260,11 +924,11 @@ let targetX =
     0;
 
 
-let currentY =
+let rotationY =
     0;
 
 
-let currentX =
+let rotationX =
     0;
 
 
@@ -1273,28 +937,24 @@ let lastInteraction =
 
 
 
-stage.addEventListener(
+renderer.domElement.addEventListener(
     "pointerdown",
-    event => {
+    e => {
 
         dragging =
             true;
 
-
         lastX =
-            event.clientX;
-
+            e.clientX;
 
         lastY =
-            event.clientY;
-
+            e.clientY;
 
         lastInteraction =
             performance.now();
 
-
-        stage.setPointerCapture(
-            event.pointerId
+        renderer.domElement.setPointerCapture(
+            e.pointerId
         );
 
     }
@@ -1302,46 +962,62 @@ stage.addEventListener(
 
 
 
-stage.addEventListener(
+renderer.domElement.addEventListener(
     "pointermove",
-    event => {
+    e => {
 
         if (!dragging)
             return;
 
 
         const dx =
-            event.clientX -
+            e.clientX -
             lastX;
 
 
         const dy =
-            event.clientY -
+            e.clientY -
             lastY;
 
 
+        /*
+           Deliberately subtle.
+        */
+
         targetY +=
-            dx * .006;
+            dx * .0032;
 
 
         targetX +=
-            dy * .003;
+            dy * .0018;
+
+
+        /*
+           Prevent crazy rotations.
+        */
+
+        targetY =
+            THREE.MathUtils.clamp(
+                targetY,
+                -.34,
+                .34
+            );
 
 
         targetX =
             THREE.MathUtils.clamp(
                 targetX,
-                -.25,
-                .25
+                -.12,
+                .12
             );
 
 
         lastX =
-            event.clientX;
+            e.clientX;
 
 
         lastY =
-            event.clientY;
+            e.clientY;
 
 
         lastInteraction =
@@ -1352,7 +1028,7 @@ stage.addEventListener(
 
 
 
-stage.addEventListener(
+renderer.domElement.addEventListener(
     "pointerup",
     () => {
 
@@ -1364,7 +1040,7 @@ stage.addEventListener(
 
 
 
-stage.addEventListener(
+renderer.domElement.addEventListener(
     "pointercancel",
     () => {
 
@@ -1376,20 +1052,12 @@ stage.addEventListener(
 
 
 
-/* =========================================================
+/* =====================================================
    ANIMATION
-========================================================= */
+===================================================== */
 
 const clock =
     new THREE.Clock();
-
-
-function start() {
-
-    animate();
-
-}
-
 
 
 function animate() {
@@ -1403,83 +1071,86 @@ function animate() {
         clock.getElapsedTime();
 
 
+    /*
+       Idle animation.
+
+       Very small movement.
+    */
+
     const idle =
         performance.now() -
         lastInteraction >
-        1800;
+        1500;
 
 
-    /*
-       Slow premium rotation
-    */
-
-    const automaticY =
+    const autoY =
         idle
             ? Math.sin(
-                t * .30
-              ) * .105
+                t * .28
+              ) * .075
             : 0;
 
 
-    const automaticX =
+    const autoX =
         idle
             ? Math.sin(
-                t * .22
+                t * .21
               ) * .018
             : 0;
 
 
     const desiredY =
         targetY +
-        automaticY;
+        autoY;
 
 
     const desiredX =
         targetX +
-        automaticX;
+        autoX;
 
 
-    currentY +=
+    rotationY +=
         (
             desiredY -
-            currentY
+            rotationY
         ) * .045;
 
 
-    currentX +=
+    rotationX +=
         (
             desiredX -
-            currentX
+            rotationX
         ) * .045;
 
 
-    rig.rotation.y =
-        currentY;
+    logoGroup.rotation.y =
+        rotationY;
 
 
-    rig.rotation.x =
-        currentX;
+    logoGroup.rotation.x =
+        rotationX;
 
 
     /*
-       Very subtle floating movement
+       Tiny floating movement.
     */
 
-    rig.position.y =
+    logoGroup.position.y =
+        .55 +
         Math.sin(
-            t * .45
-        ) * .025;
+            t * .55
+        ) * .018;
 
 
     /*
-       Blue light breathing
+       Blue light breathing.
     */
 
-    bluePoint.intensity =
-        20 +
+    rimLight.intensity =
+        16 +
         Math.sin(
             t * .8
-        ) * 4;
+        ) * 2.5;
 
 
     renderer.render(
@@ -1491,9 +1162,9 @@ function animate() {
 
 
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
+/* =====================================================
+   RESIZE
+===================================================== */
 
 window.addEventListener(
     "resize",
