@@ -2,126 +2,441 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>NØR — 3D Emblem</title>
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+  <title>N/F — 3D Emblem</title>
+
   <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#020304; }
-    #stage { position:fixed; inset:0; touch-action:none; cursor:grab; background:radial-gradient(ellipse at 50% 46%, #0d1721 0%, #030609 42%, #010102 76%); }
-    #stage:active { cursor:grabbing; }
-    canvas { width:100%; height:100%; display:block; }
-    .label { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); font:600 10px/1.2 system-ui,sans-serif; letter-spacing:.24em; color:#83bce7; opacity:.58; pointer-events:none; white-space:nowrap; text-transform:uppercase; }
-    @media (max-width:600px) { .label { bottom:18px; font-size:9px; } }
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #020304;
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      touch-action: none;
+      cursor: grab;
+      background:
+        radial-gradient(
+          ellipse at 50% 46%,
+          #122233 0%,
+          #071018 34%,
+          #020406 62%,
+          #010102 100%
+        );
+    }
+
+    #stage:active {
+      cursor: grabbing;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .label {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      color: #87caff;
+      opacity: 0.58;
+      pointer-events: none;
+      white-space: nowrap;
+      font: 700 10px/1.2 system-ui, Arial, sans-serif;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 600px) {
+      .label {
+        bottom: 18px;
+        font-size: 9px;
+      }
+    }
   </style>
 </head>
-<body>
-  <main id="stage" aria-label="Interaktives NØR 3D-Emblem"><div class="label">Drag to inspect · NØR</div></main>
-  <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
-    import { RoomEnvironment } from 'https://unpkg.com/three@0.165.0/examples/jsm/environments/RoomEnvironment.js';
 
-    const mount = document.querySelector('#stage');
-    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:'high-performance' });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
-    renderer.setSize(innerWidth, innerHeight);
+<body>
+  <main id="stage" aria-label="Interaktives N/F 3D-Emblem">
+    <div class="label">N/F · Drag to inspect</div>
+  </main>
+
+  <script type="module">
+    import * as THREE from "https://esm.sh/three@0.165.0";
+
+    const mount = document.querySelector("#stage");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7));
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.28;
+    renderer.toneMappingExposure = 1.35;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
     mount.prepend(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x020406, 0.075);
-    const camera = new THREE.PerspectiveCamera(31, innerWidth/innerHeight, .1, 100);
-    camera.position.set(0, .1, 13.2);
+    scene.fog = new THREE.FogExp2(0x030609, 0.055);
 
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
-    pmrem.dispose();
+    const camera = new THREE.PerspectiveCamera(
+      31,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
 
-    const group = new THREE.Group();
-    group.rotation.set(-.07, -.28, 0);
-    scene.add(group);
+    camera.position.set(0, 0.1, 13.2);
 
-    // Brushed, dark-silver PBR material: deliberately restrained rather than chrome.
-    const metal = new THREE.MeshStandardMaterial({ color:0x77808a, metalness:.93, roughness:.28, envMapIntensity:1.18 });
-    const edgeMetal = new THREE.MeshStandardMaterial({ color:0xb8c1c9, metalness:.94, roughness:.19, envMapIntensity:1.35 });
-    const darkMetal = new THREE.MeshStandardMaterial({ color:0x252b32, metalness:.90, roughness:.34, envMapIntensity:.9 });
-    const glow = new THREE.MeshBasicMaterial({ color:0x008cff, transparent:true, opacity:.76, blending:THREE.AdditiveBlending, depthWrite:false });
+    const emblem = new THREE.Group();
+    emblem.rotation.set(-0.08, -0.25, 0);
+    scene.add(emblem);
 
-    // Subtle procedural grain for the metal, held in the roughness channel.
-    const grain = document.createElement('canvas'); grain.width=grain.height=256;
-    const gx = grain.getContext('2d'), id = gx.createImageData(256,256);
-    for(let i=0;i<id.data.length;i+=4){ const v=70+Math.random()*80; id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=255; }
-    gx.putImageData(id,0,0);
-    const grainTex = new THREE.CanvasTexture(grain); grainTex.wrapS=grainTex.wrapT=THREE.RepeatWrapping; grainTex.repeat.set(3,6);
-    metal.roughnessMap=grainTex; edgeMetal.roughnessMap=grainTex;
+    const grainCanvas = document.createElement("canvas");
+    grainCanvas.width = 256;
+    grainCanvas.height = 256;
 
-    const bevel = { depth:.48, bevelEnabled:true, bevelThickness:.075, bevelSize:.065, bevelSegments:2, curveSegments:2 };
-    function poly(points, material=metal, depth=bevel.depth) {
-      const s = new THREE.Shape(); s.moveTo(points[0][0],points[0][1]);
-      for(let i=1;i<points.length;i++) s.lineTo(points[i][0],points[i][1]);
-      s.closePath();
-      const g = new THREE.ExtrudeGeometry(s, {...bevel, depth});
-      g.center();
-      const m = new THREE.Mesh(g, material); m.castShadow=m.receiveShadow=true; return m;
-    }
-    function edge(points) {
-      const base = poly(points, glow);
-      base.scale.set(1.012,1.012,1); base.position.z=-.275; return base;
+    const grainContext = grainCanvas.getContext("2d");
+    const imageData = grainContext.createImageData(256, 256);
+
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const value = 75 + Math.random() * 90;
+
+      imageData.data[i] = value;
+      imageData.data[i + 1] = value;
+      imageData.data[i + 2] = value;
+      imageData.data[i + 3] = 255;
     }
 
-    // Custom polygonal construction retains the angular NØR identity from the supplied mark.
+    grainContext.putImageData(imageData, 0, 0);
+
+    const grainTexture = new THREE.CanvasTexture(grainCanvas);
+    grainTexture.wrapS = THREE.RepeatWrapping;
+    grainTexture.wrapT = THREE.RepeatWrapping;
+    grainTexture.repeat.set(4, 5);
+
+    const metal = new THREE.MeshStandardMaterial({
+      color: 0x737d87,
+      metalness: 0.94,
+      roughness: 0.29,
+      roughnessMap: grainTexture,
+      envMapIntensity: 1.15
+    });
+
+    const brightMetal = new THREE.MeshStandardMaterial({
+      color: 0xb8c2cb,
+      metalness: 0.95,
+      roughness: 0.19,
+      roughnessMap: grainTexture,
+      envMapIntensity: 1.35
+    });
+
+    const blueGlow = new THREE.MeshBasicMaterial({
+      color: 0x008cff,
+      transparent: true,
+      opacity: 0.76,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    const bevelSettings = {
+      depth: 0.52,
+      bevelEnabled: true,
+      bevelThickness: 0.075,
+      bevelSize: 0.065,
+      bevelSegments: 2,
+      curveSegments: 2
+    };
+
+    function createExtrudedPiece(points, material = metal) {
+      const shape = new THREE.Shape();
+
+      shape.moveTo(points[0][0], points[0][1]);
+
+      for (let i = 1; i < points.length; i++) {
+        shape.lineTo(points[i][0], points[i][1]);
+      }
+
+      shape.closePath();
+
+      const geometry = new THREE.ExtrudeGeometry(shape, bevelSettings);
+
+      /*
+        Die Z-Tiefe wird zentriert.
+        Wichtig: Kein geometry.center(), da sonst alle
+        individuellen N/F-Elemente übereinander liegen würden.
+      */
+      geometry.translate(0, 0, -bevelSettings.depth / 2);
+
+      const mesh = new THREE.Mesh(geometry, material);
+
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      return mesh;
+    }
+
+    function createBlueEdge(points) {
+      const edge = createExtrudedPiece(points, blueGlow);
+
+      edge.scale.set(1.015, 1.015, 1);
+      edge.position.z = -0.3;
+
+      return edge;
+    }
+
+    /*
+      Kombiniertes N/F-Emblem:
+      Linke Seite = massives, schräges N.
+      Rechte Seite = kantiges F mit gestaffelten Balken.
+    */
     const pieces = [
-      // N: monumental left stem and wide diagonal stroke
-      [[-5.55,-2.80],[-4.68,-2.18],[-3.72,2.72],[-4.62,2.78]],
-      [[-4.63,2.78],[-3.63,2.76],[.04,-2.78],[-.96,-2.12]],
-      [[-1.06,-2.78],[-.16,-2.18],[.36,2.78],[-.62,2.78]],
-      // Ø: upper / lower strokes and inner angled slash (the Ø cut remains conspicuous)
-      [[.58,1.60],[1.37,2.62],[5.28,2.62],[4.65,1.61]],
-      [[.62,.12],[1.34,.12],[1.08,-2.74],[.23,-2.72]],
-      [[1.75,-.06],[5.17,-.06],[4.43,-1.00],[2.46,-1.00]],
-      [[2.42,-1.00],[4.52,-1.00],[3.52,-2.73],[2.53,-2.73]],
-      // Ø diagonal bridge, matching the hard tactical slash language
-      [[1.45,-2.74],[2.18,-2.74],[5.50,2.75],[4.78,2.75]],
+      [
+        [-5.6, -2.85],
+        [-4.7, -2.14],
+        [-3.76, 2.8],
+        [-4.68, 2.8]
+      ],
+      [
+        [-4.7, 2.8],
+        [-3.65, 2.8],
+        [0.02, -2.82],
+        [-1.03, -2.14]
+      ],
+      [
+        [-1.1, -2.85],
+        [-0.18, -2.18],
+        [0.34, 2.8],
+        [-0.63, 2.8]
+      ],
+      [
+        [0.63, -2.84],
+        [1.55, -2.84],
+        [1.55, 2.77],
+        [0.63, 1.7]
+      ],
+      [
+        [1.38, 1.66],
+        [2.18, 2.78],
+        [5.45, 2.78],
+        [4.74, 1.67]
+      ],
+      [
+        [1.4, -0.08],
+        [5.12, -0.08],
+        [4.42, -1.08],
+        [1.42, -1.08]
+      ],
+      [
+        [4.34, -1.08],
+        [5.08, -1.08],
+        [3.66, -2.82],
+        [2.58, -2.82]
+      ]
     ];
-    pieces.forEach((p,i)=> { const a=edge(p); group.add(a); const m=poly(p, i===7 ? edgeMetal : metal); group.add(m); });
 
-    // Hairline blue light seams under the lower silhouettes.
-    function line(a,b) { const g=new THREE.CylinderGeometry(.018,.018,new THREE.Vector2(b[0]-a[0],b[1]-a[1]).length,8); const l=new THREE.Mesh(g,glow); const x=(a[0]+b[0])/2,y=(a[1]+b[1])/2; l.position.set(x,y,-.34); l.rotation.z=-Math.atan2(b[0]-a[0],b[1]-a[1]); group.add(l); }
-    line([-5.5,-2.82],[-4.62,2.8]); line([-.98,-2.79],[-.62,2.8]); line([1.42,-2.76],[5.52,2.77]);
+    pieces.forEach((piece, index) => {
+      const blueEdge = createBlueEdge(piece);
+      emblem.add(blueEdge);
 
-    // Ground haze, almost imperceptible and mobile-friendly.
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(42,42), new THREE.MeshStandardMaterial({color:0x020609,roughness:.8,metalness:.15}));
-    floor.rotation.x=-Math.PI/2; floor.position.y=-3.65; floor.receiveShadow=true; scene.add(floor);
+      const material = index === 1 || index === 4
+        ? brightMetal
+        : metal;
 
-    function light(color,intensity,x,y,z) { const l=new THREE.DirectionalLight(color,intensity); l.position.set(x,y,z); l.castShadow=true; l.shadow.mapSize.set(1024,1024); scene.add(l); return l; }
-    light(0xe4f2ff,3.1,-5,6,7); light(0x006eff,3.0,6,1,4); light(0x78c8ff,1.3,-2,-2,-3);
-    const bluePoint=new THREE.PointLight(0x0077ff,22,13,2); bluePoint.position.set(2.5,1,3); scene.add(bluePoint);
-    scene.add(new THREE.AmbientLight(0x172130,.62));
+      const metalPiece = createExtrudedPiece(piece, material);
+      emblem.add(metalPiece);
+    });
 
-    let dragging=false, lastX=0, lastY=0, userYaw=0, userPitch=0, idleAt=0;
-    function start(e){ dragging=true; lastX=e.clientX; lastY=e.clientY; idleAt=performance.now(); }
-    function move(e){ if(!dragging)return; userYaw += (e.clientX-lastX)*.008; userPitch=THREE.MathUtils.clamp(userPitch+(e.clientY-lastY)*.004,-.28,.22); lastX=e.clientX; lastY=e.clientY; idleAt=performance.now(); }
-    function end(){ dragging=false; idleAt=performance.now(); }
-    renderer.domElement.addEventListener('pointerdown',start); window.addEventListener('pointermove',move); window.addEventListener('pointerup',end);
+    function createLightLine(start, end) {
+      const startVector = new THREE.Vector2(start[0], start[1]);
+      const endVector = new THREE.Vector2(end[0], end[1]);
 
-    const clock=new THREE.Clock();
-    function render(){
-      const t=clock.getElapsedTime();
-      // A sinusoidal yaw, not a perpetual spin: its first and final frame match exactly.
-      const auto = Math.sin(t*.19)*.17;
-      const resume = Math.min(1, Math.max(0,(performance.now()-idleAt-900)/1600));
-      group.rotation.y = -.28 + userYaw + auto*resume;
-      group.rotation.x = -.07 + userPitch;
-      bluePoint.intensity = 17 + Math.sin(t*.38)*5;
-      renderer.render(scene,camera);
-      requestAnimationFrame(render);
+      const length = startVector.distanceTo(endVector);
+
+      const geometry = new THREE.CylinderGeometry(
+        0.018,
+        0.018,
+        length,
+        8
+      );
+
+      const line = new THREE.Mesh(geometry, blueGlow);
+
+      line.position.set(
+        (start[0] + end[0]) / 2,
+        (start[1] + end[1]) / 2,
+        -0.36
+      );
+
+      line.rotation.z = -Math.atan2(
+        end[0] - start[0],
+        end[1] - start[1]
+      );
+
+      emblem.add(line);
     }
-    render();
-    addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+
+    createLightLine([-5.54, -2.84], [-4.67, 2.79]);
+    createLightLine([-1.08, -2.84], [-0.62, 2.79]);
+    createLightLine([2.56, -2.81], [5.43, 2.77]);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(42, 42),
+      new THREE.MeshStandardMaterial({
+        color: 0x03070b,
+        roughness: 0.83,
+        metalness: 0.18
+      })
+    );
+
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -3.65;
+    floor.receiveShadow = true;
+
+    scene.add(floor);
+
+    function addDirectionalLight(color, intensity, x, y, z) {
+      const light = new THREE.DirectionalLight(color, intensity);
+
+      light.position.set(x, y, z);
+      light.castShadow = true;
+      light.shadow.mapSize.set(1024, 1024);
+
+      scene.add(light);
+
+      return light;
+    }
+
+    addDirectionalLight(0xe7f4ff, 3.1, -5, 6, 7);
+    addDirectionalLight(0x0077ff, 3.1, 6, 1, 4);
+    addDirectionalLight(0x72c9ff, 1.3, -3, -2, -3);
+
+    const bluePointLight = new THREE.PointLight(
+      0x007eff,
+      22,
+      13,
+      2
+    );
+
+    bluePointLight.position.set(2.7, 1, 3);
+    scene.add(bluePointLight);
+
+    scene.add(new THREE.AmbientLight(0x152334, 0.72));
+
+    let isDragging = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    let userYaw = 0;
+    let userPitch = 0;
+
+    let interactionEndedAt = performance.now();
+
+    function onPointerDown(event) {
+      isDragging = true;
+
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+
+      interactionEndedAt = performance.now();
+
+      renderer.domElement.setPointerCapture(event.pointerId);
+    }
+
+    function onPointerMove(event) {
+      if (!isDragging) return;
+
+      userYaw += (event.clientX - lastPointerX) * 0.008;
+
+      userPitch = THREE.MathUtils.clamp(
+        userPitch + (event.clientY - lastPointerY) * 0.004,
+        -0.28,
+        0.22
+      );
+
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+
+      interactionEndedAt = performance.now();
+    }
+
+    function onPointerUp(event) {
+      isDragging = false;
+      interactionEndedAt = performance.now();
+
+      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+        renderer.domElement.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    renderer.domElement.addEventListener("pointerdown", onPointerDown);
+    renderer.domElement.addEventListener("pointermove", onPointerMove);
+    renderer.domElement.addEventListener("pointerup", onPointerUp);
+    renderer.domElement.addEventListener("pointercancel", onPointerUp);
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+      const time = clock.getElapsedTime();
+
+      const idleDuration = performance.now() - interactionEndedAt;
+
+      /*
+        Auto-Rotation kommt erst nach Nutzerinteraktion zurück.
+        Die Sinusbewegung ist ruhig und endet zyklisch wieder
+        in derselben Position.
+      */
+      const autoRotationStrength = THREE.MathUtils.clamp(
+        (idleDuration - 900) / 1600,
+        0,
+        1
+      );
+
+      const controlledAutoYaw =
+        Math.sin(time * 0.19) * 0.17 * autoRotationStrength;
+
+      emblem.rotation.y = -0.25 + userYaw + controlledAutoYaw;
+      emblem.rotation.x = -0.08 + userPitch;
+
+      bluePointLight.intensity = 17 + Math.sin(time * 0.38) * 5;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
   </script>
 </body>
 </html>
