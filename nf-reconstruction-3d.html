@@ -1,1 +1,1269 @@
-<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;overflow:hidden;background:#010204}canvas{display:block}</style></head><body><script type="module">import*as T from'https://esm.sh/three@0.165.0';let r=new T.WebGLRenderer({antialias:true});r.setSize(innerWidth,innerHeight);r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.shadowMap.enabled=true;document.body.append(r.domElement);let s=new T.Scene(),c=new T.PerspectiveCamera(32,innerWidth/innerHeight,.1,100);c.position.set(0,0,15);s.fog=new T.FogExp2(0x020609,.055);let w=new T.Group();s.add(w);let metal=new T.MeshStandardMaterial({color:0x71808b,metalness:.92,roughness:.24}),blue=new T.MeshBasicMaterial({color:0x008cff});function x(p,m=metal){let q=new T.Shape();q.moveTo(...p[0]);p.slice(1).forEach(a=>q.lineTo(...a));q.closePath();let g=new T.ExtrudeGeometry(q,{depth:.62,bevelEnabled:true,bevelThickness:.08,bevelSize:.07,bevelSegments:2});g.translate(0,0,-.31);let z=new T.Mesh(g,m);z.castShadow=true;return z}let a=[[[-5,-2],[-4,-1.5],[-3.3,2.4],[-4.2,2.4]],[[-4.2,2.4],[-3.2,2.4],[.1,-2],[-.9,-1.5]],[[-1,-2],[-.1,-1.5],[.35,2.4],[-.55,2.4]],[[.55,-2],[1.4,-2],[1.4,2.4],[.55,1.3]],[[.6,1.35],[1.4,2.4],[5,2.4],[4.4,1.4]],[[1.4,-.1],[4.9,-.1],[4.25,-1],[1.4,-1]],[[2.4,-1],[4.4,-1],[3.35,-2],[2.45,-2]]];let logo=new T.Group();logo.position.y=2;w.add(logo);a.forEach((p,i)=>{let b=x(p,blue);b.scale.set(1.02,1.02,1);b.position.z=-.38;logo.add(b,x(p))});for(let i=0;i<16;i++){let m=new T.Mesh(new T.ConeGeometry(1+Math.random(),2+Math.random()*2,5),new T.MeshStandardMaterial({color:0x111b24,roughness:.7}));m.position.set(-8+i, -3,2+Math.random()*2);m.castShadow=true;w.add(m)}function f(x,z,k){let g=new T.Group();g.position.set(x,-3,z);g.scale.setScalar(k);let body=new T.Mesh(new T.BoxGeometry(1,1.7,.6),new T.MeshStandardMaterial({color:0x121b22,metalness:.5}));body.position.y=1;let head=new T.Mesh(new T.SphereGeometry(.42,16,12),metal);head.position.y=2.2;g.add(body,head);w.add(g)}f(-2.4,.5,1);f(0,0,1.3);f(2.5,.5,1);let floor=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshStandardMaterial({color:0x020407,roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-3;s.add(floor);[[0xeaf6ff,3,-5,6,7],[0x007dff,3,5,3,5]].forEach(v=>{let l=new T.DirectionalLight(v[0],v[1]);l.position.set(v[2],v[3],v[4]);s.add(l)});s.add(new T.AmbientLight(0x1a2b3b,.7));let d=0,l=0,rx=0,ry=0;r.domElement.onpointerdown=e=>{d=1;l=e.clientX};r.domElement.onpointermove=e=>{if(d)ry+=(e.clientX-l)*.008,l=e.clientX};r.domElement.onpointerup=()=>d=0;function A(t){if(!d)ry+=Math.sin(t*.0003)*.001;w.rotation.y=-.25+ry;w.rotation.x=-.08+rx;r.render(s,c);requestAnimationFrame(A)}A();onresize=()=>{c.aspect=innerWidth/innerHeight;c.updateProjectionMatrix();r.setSize(innerWidth,innerHeight)}</script></body></html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+
+  <title>N/F — 3D Logo</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    body {
+      font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    #stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      cursor: grab;
+
+      background:
+        radial-gradient(
+          ellipse at 50% 43%,
+          #0b151f 0%,
+          #03070b 43%,
+          #000 78%
+        );
+    }
+
+    #stage:active {
+      cursor: grabbing;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Subtile Vignette */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+
+      background:
+        radial-gradient(
+          ellipse at center,
+          transparent 35%,
+          rgba(0, 0, 0, 0.18) 62%,
+          rgba(0, 0, 0, 0.78) 100%
+        );
+    }
+
+    /* Sehr dezente blaue Atmosphäre */
+    .blue-atmosphere {
+      position: absolute;
+      width: min(900px, 100vw);
+      height: min(700px, 80vh);
+
+      left: 50%;
+      top: 45%;
+
+      transform: translate(-50%, -50%);
+
+      background:
+        radial-gradient(
+          ellipse,
+          rgba(0, 100, 255, 0.13),
+          rgba(0, 50, 120, 0.05) 40%,
+          transparent 72%
+        );
+
+      filter: blur(35px);
+      pointer-events: none;
+    }
+
+    /* Bedienungshinweis */
+    .hint {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+
+      transform: translateX(-50%);
+
+      padding: 7px 13px;
+
+      border: 1px solid rgba(120, 190, 255, 0.16);
+      border-radius: 999px;
+
+      background: rgba(0, 5, 10, 0.42);
+
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+
+      color: rgba(190, 225, 255, 0.55);
+
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .hint {
+        bottom: 12px;
+        font-size: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main id="stage">
+
+    <div class="blue-atmosphere"></div>
+
+    <div class="vignette"></div>
+
+    <div class="hint">
+      N/F · DRAG TO ROTATE
+    </div>
+
+  </main>
+
+
+  <script type="module">
+
+    /* =========================================================
+       THREE.JS
+    ========================================================= */
+
+    import * as THREE from
+      "https://esm.sh/three@0.165.0";
+
+
+    /* =========================================================
+       BASIC SETUP
+    ========================================================= */
+
+    const stage = document.getElementById("stage");
+
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
+
+
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio || 1, 1.7)
+    );
+
+
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+
+    renderer.toneMapping =
+      THREE.ACESFilmicToneMapping;
+
+
+    renderer.toneMappingExposure = 1.08;
+
+
+    stage.prepend(renderer.domElement);
+
+
+
+    /* =========================================================
+       SCENE
+    ========================================================= */
+
+    const scene = new THREE.Scene();
+
+
+    scene.fog = new THREE.FogExp2(
+      0x020508,
+      0.045
+    );
+
+
+
+    /* =========================================================
+       CAMERA
+    ========================================================= */
+
+    const camera =
+      new THREE.PerspectiveCamera(
+        31,
+        window.innerWidth /
+          window.innerHeight,
+        0.1,
+        100
+      );
+
+
+    camera.position.set(
+      0,
+      0.25,
+      15.5
+    );
+
+
+
+    /* =========================================================
+       MAIN 3D RIG
+    ========================================================= */
+
+    const rig = new THREE.Group();
+
+    scene.add(rig);
+
+
+
+    /* =========================================================
+       LOGO GROUP
+    ========================================================= */
+
+    const logo = new THREE.Group();
+
+    logo.position.y = 1.25;
+
+    rig.add(logo);
+
+
+
+    /* =========================================================
+       MATERIALS
+    ========================================================= */
+
+    /*
+      Hauptmaterial:
+      gebürstetes dunkles Metall
+    */
+
+    const metalMaterial =
+      new THREE.MeshStandardMaterial({
+
+        color: 0x9da5aa,
+
+        metalness: 0.96,
+
+        roughness: 0.22
+
+      });
+
+
+
+    /*
+      Blaue Rückseite / Lichtkante
+    */
+
+    const blueMaterial =
+      new THREE.MeshBasicMaterial({
+
+        color: 0x008cff,
+
+        transparent: true,
+
+        opacity: 0.90
+
+      });
+
+
+
+    /*
+      Weiches blaues Licht
+    */
+
+    const blueGlowMaterial =
+      new THREE.MeshBasicMaterial({
+
+        color: 0x006eff,
+
+        transparent: true,
+
+        opacity: 0.20,
+
+        side: THREE.DoubleSide
+
+      });
+
+
+
+    /* =========================================================
+       FUNCTION:
+       3D POLYGON
+    ========================================================= */
+
+    function createPolygon(
+      points,
+      material,
+      z = 0
+    ) {
+
+      const shape =
+        new THREE.Shape();
+
+
+      shape.moveTo(
+        points[0][0],
+        points[0][1]
+      );
+
+
+      for (
+        let i = 1;
+        i < points.length;
+        i++
+      ) {
+
+        shape.lineTo(
+          points[i][0],
+          points[i][1]
+        );
+
+      }
+
+
+      shape.closePath();
+
+
+      const geometry =
+        new THREE.ExtrudeGeometry(
+          shape,
+          {
+
+            depth: 0.66,
+
+            bevelEnabled: true,
+
+            bevelThickness: 0.085,
+
+            bevelSize: 0.075,
+
+            bevelSegments: 3,
+
+            curveSegments: 2
+
+          }
+        );
+
+
+      geometry.translate(
+        0,
+        0,
+        -0.33
+      );
+
+
+      const mesh =
+        new THREE.Mesh(
+          geometry,
+          material
+        );
+
+
+      mesh.position.z = z;
+
+
+      mesh.castShadow = true;
+
+      mesh.receiveShadow = true;
+
+
+      return mesh;
+    }
+
+
+
+    /* =========================================================
+       N/F LOGO GEOMETRY
+    =========================================================
+
+       Die Form orientiert sich an deinem
+       bereitgestellten N/F-Logo.
+
+    ========================================================= */
+
+    const logoShapes = [
+
+      [
+        [-5.0, -2.35],
+        [-4.05, -1.35],
+        [-3.25, 2.65],
+        [-4.35, 2.65]
+      ],
+
+      [
+        [-4.35, 2.65],
+        [-3.15, 2.65],
+        [0.20, -2.35],
+        [-0.85, -1.55]
+      ],
+
+      [
+        [-0.95, -2.35],
+        [-0.05, -1.55],
+        [0.38, 2.65],
+        [-0.62, 2.65]
+      ],
+
+      [
+        [0.58, -2.35],
+        [1.48, -2.35],
+        [1.48, 2.65],
+        [0.58, 1.30]
+      ],
+
+      [
+        [0.62, 1.38],
+        [1.48, 2.65],
+        [5.05, 2.65],
+        [4.42, 1.38]
+      ],
+
+      [
+        [1.48, -0.02],
+        [4.90, -0.02],
+        [4.30, -0.96],
+        [1.48, -0.96]
+      ],
+
+      [
+        [2.42, -0.96],
+        [4.40, -0.96],
+        [3.35, -2.35],
+        [2.42, -2.35]
+      ]
+
+    ];
+
+
+
+    /* =========================================================
+       CREATE LOGO
+    ========================================================= */
+
+    logoShapes.forEach(
+      points => {
+
+        /*
+          Blaues Backlight
+        */
+
+        const blueBack =
+          createPolygon(
+            points,
+            blueMaterial,
+            -0.43
+          );
+
+
+        blueBack.scale.set(
+          1.018,
+          1.018,
+          1
+        );
+
+
+        logo.add(
+          blueBack
+        );
+
+
+        /*
+          Metalloberfläche
+        */
+
+        const metal =
+          createPolygon(
+            points,
+            metalMaterial,
+            0
+          );
+
+
+        logo.add(
+          metal
+        );
+
+      }
+    );
+
+
+
+    /* =========================================================
+       BLUE EDGE LINES
+    ========================================================= */
+
+    const edgeMaterial =
+      new THREE.LineBasicMaterial({
+
+        color: 0x2aa9ff,
+
+        transparent: true,
+
+        opacity: 0.85
+
+      });
+
+
+    logoShapes.forEach(
+      points => {
+
+        const vertices =
+          points.map(
+            p =>
+              new THREE.Vector3(
+                p[0],
+                p[1],
+                0.37
+              )
+          );
+
+
+        vertices.push(
+          vertices[0]
+        );
+
+
+        const geometry =
+          new THREE.BufferGeometry()
+            .setFromPoints(vertices);
+
+
+        const line =
+          new THREE.Line(
+            geometry,
+            edgeMaterial
+          );
+
+
+        logo.add(line);
+
+      }
+    );
+
+
+
+    /* =========================================================
+       BACKGROUND MOUNTAINS
+    ========================================================= */
+
+    const mountainGroup =
+      new THREE.Group();
+
+
+    mountainGroup.position.set(
+      0,
+      -2.9,
+      -1.5
+    );
+
+
+    rig.add(
+      mountainGroup
+    );
+
+
+    const mountainMaterial =
+      new THREE.MeshStandardMaterial({
+
+        color: 0x111a22,
+
+        metalness: 0.12,
+
+        roughness: 0.90,
+
+        flatShading: true
+
+      });
+
+
+
+    /*
+      Mehrere Bergspitzen
+    */
+
+    for (
+      let i = 0;
+      i < 17;
+      i++
+    ) {
+
+      const height =
+        1.2 +
+        Math.random() * 2.6;
+
+
+      const width =
+        0.9 +
+        Math.random() * 1.7;
+
+
+      const geometry =
+        new THREE.ConeGeometry(
+          width,
+          height,
+          5,
+          1
+        );
+
+
+      const mountain =
+        new THREE.Mesh(
+          geometry,
+          mountainMaterial
+        );
+
+
+      mountain.position.set(
+
+        -9 +
+        i * 1.15 +
+        (Math.random() - 0.5) * 0.5,
+
+        0,
+
+        -Math.random() * 1.5
+
+      );
+
+
+      mountain.rotation.y =
+        Math.random() *
+        Math.PI;
+
+
+      mountainGroup.add(
+        mountain
+      );
+
+    }
+
+
+
+    /* =========================================================
+       THREE FIGURES
+    ========================================================= */
+
+    const people =
+      new THREE.Group();
+
+
+    people.position.y = -3.2;
+
+
+    rig.add(
+      people
+    );
+
+
+
+    function createPerson(
+      x,
+      scale,
+      depth
+    ) {
+
+      const group =
+        new THREE.Group();
+
+
+      group.position.set(
+        x,
+        0,
+        depth
+      );
+
+
+      group.scale.setScalar(
+        scale
+      );
+
+
+      const bodyMaterial =
+        new THREE.MeshStandardMaterial({
+
+          color: 0x070b0f,
+
+          metalness: 0.18,
+
+          roughness: 0.86
+
+        });
+
+
+
+      /*
+        Körper
+      */
+
+      const body =
+        new THREE.Mesh(
+
+          new THREE.CapsuleGeometry(
+            0.48,
+            1.45,
+            5,
+            10
+          ),
+
+          bodyMaterial
+
+        );
+
+
+      body.position.y =
+        0.8;
+
+
+      group.add(
+        body
+      );
+
+
+
+      /*
+        Kopf
+      */
+
+      const head =
+        new THREE.Mesh(
+
+          new THREE.SphereGeometry(
+            0.34,
+            18,
+            12
+          ),
+
+          bodyMaterial
+
+        );
+
+
+      head.position.y =
+        2.05;
+
+
+      group.add(
+        head
+      );
+
+
+
+      /*
+        Schultern
+      */
+
+      const shoulders =
+        new THREE.Mesh(
+
+          new THREE.BoxGeometry(
+            1.2,
+            0.36,
+            0.48
+          ),
+
+          bodyMaterial
+
+        );
+
+
+      shoulders.position.y =
+        1.5;
+
+
+      group.add(
+        shoulders
+      );
+
+
+      people.add(
+        group
+      );
+
+    }
+
+
+
+    createPerson(
+      -2.45,
+      0.95,
+      0.2
+    );
+
+
+    createPerson(
+      0,
+      1.22,
+      0
+    );
+
+
+    createPerson(
+      2.55,
+      1,
+      0.25
+    );
+
+
+
+    /* =========================================================
+       BLUE ATMOSPHERIC GLOW
+    ========================================================= */
+
+    const glow =
+      new THREE.Mesh(
+
+        new THREE.PlaneGeometry(
+          12,
+          8
+        ),
+
+        blueGlowMaterial
+
+      );
+
+
+    glow.position.set(
+      0,
+      0.6,
+      -0.9
+    );
+
+
+    rig.add(
+      glow
+    );
+
+
+
+    /* =========================================================
+       LIGHTING
+    ========================================================= */
+
+    /*
+      Grundbeleuchtung
+    */
+
+    scene.add(
+
+      new THREE.HemisphereLight(
+        0x8dbbde,
+        0x010204,
+        0.75
+      )
+
+    );
+
+
+
+    /*
+      Weißes Key Light
+    */
+
+    const keyLight =
+      new THREE.DirectionalLight(
+        0xeaf6ff,
+        4.0
+      );
+
+
+    keyLight.position.set(
+      -4,
+      7,
+      8
+    );
+
+
+    scene.add(
+      keyLight
+    );
+
+
+
+    /*
+      Blaues Rim Light
+    */
+
+    const rimLight =
+      new THREE.DirectionalLight(
+        0x008cff,
+        3.2
+      );
+
+
+    rimLight.position.set(
+      5,
+      3,
+      2
+    );
+
+
+    scene.add(
+      rimLight
+    );
+
+
+
+    /*
+      Front Glow
+    */
+
+    const frontLight =
+      new THREE.PointLight(
+        0x126cff,
+        18,
+        12
+      );
+
+
+    frontLight.position.set(
+      0,
+      1,
+      5
+    );
+
+
+    scene.add(
+      frontLight
+    );
+
+
+
+    /* =========================================================
+       INTERACTION
+    ========================================================= */
+
+    let dragging = false;
+
+    let lastX = 0;
+    let lastY = 0;
+
+    let targetX = 0;
+    let targetY = 0;
+
+    let rotationX = 0;
+    let rotationY = 0;
+
+    let animationPausedUntil = 0;
+
+
+
+    /*
+      START DRAG
+    */
+
+    stage.addEventListener(
+      "pointerdown",
+      event => {
+
+        dragging = true;
+
+        lastX =
+          event.clientX;
+
+        lastY =
+          event.clientY;
+
+        animationPausedUntil =
+          performance.now() + 1800;
+
+        stage.setPointerCapture(
+          event.pointerId
+        );
+
+      }
+    );
+
+
+
+    /*
+      DRAG
+    */
+
+    stage.addEventListener(
+      "pointermove",
+      event => {
+
+        if (!dragging)
+          return;
+
+
+        const dx =
+          event.clientX -
+          lastX;
+
+
+        const dy =
+          event.clientY -
+          lastY;
+
+
+        targetY +=
+          dx * 0.008;
+
+
+        targetX +=
+          dy * 0.004;
+
+
+        /*
+          vertikale Rotation begrenzen
+        */
+
+        targetX =
+          Math.max(
+            -0.18,
+            Math.min(
+              0.18,
+              targetX
+            )
+          );
+
+
+        lastX =
+          event.clientX;
+
+
+        lastY =
+          event.clientY;
+
+
+        animationPausedUntil =
+          performance.now() + 1800;
+
+      }
+    );
+
+
+
+    /*
+      END DRAG
+    */
+
+    stage.addEventListener(
+      "pointerup",
+      () => {
+
+        dragging = false;
+
+        animationPausedUntil =
+          performance.now() + 1200;
+
+      }
+    );
+
+
+    stage.addEventListener(
+      "pointercancel",
+      () => {
+
+        dragging = false;
+
+      }
+    );
+
+
+
+    /* =========================================================
+       ANIMATION LOOP
+    ========================================================= */
+
+    const clock =
+      new THREE.Clock();
+
+
+    function animate() {
+
+      const time =
+        clock.getElapsedTime();
+
+
+      const now =
+        performance.now();
+
+
+      /*
+        Automatische Bewegung
+      */
+
+      const autoAnimation =
+        now < animationPausedUntil
+          ? 0
+          : 1;
+
+
+      /*
+        Sehr langsame Rotation
+      */
+
+      const automaticY =
+        Math.sin(
+          time * 0.42
+        ) *
+        0.17 *
+        autoAnimation;
+
+
+      const automaticX =
+        Math.sin(
+          time * 0.31
+        ) *
+        0.035 *
+        autoAnimation;
+
+
+      const desiredY =
+        targetY +
+        automaticY;
+
+
+      const desiredX =
+        targetX +
+        automaticX;
+
+
+
+      /*
+        Smooth interpolation
+      */
+
+      rotationY +=
+        (desiredY - rotationY) *
+        0.045;
+
+
+      rotationX +=
+        (desiredX - rotationX) *
+        0.045;
+
+
+
+      /*
+        Hauptrotation
+      */
+
+      rig.rotation.y =
+        -0.16 +
+        rotationY;
+
+
+      rig.rotation.x =
+        -0.045 +
+        rotationX;
+
+
+
+      /*
+        Minimale organische Bewegung
+      */
+
+      logo.rotation.z =
+        Math.sin(
+          time * 0.35
+        ) *
+        0.008;
+
+
+
+      /*
+        Pulsierender Glow
+      */
+
+      glow.material.opacity =
+        0.18 +
+        0.06 *
+        (
+          Math.sin(
+            time * 0.8
+          ) + 1
+        ) /
+        2;
+
+
+
+      /*
+        Render
+      */
+
+      renderer.render(
+        scene,
+        camera
+      );
+
+
+      requestAnimationFrame(
+        animate
+      );
+
+    }
+
+
+    animate();
+
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    window.addEventListener(
+      "resize",
+      () => {
+
+        camera.aspect =
+          window.innerWidth /
+          window.innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+          window.innerWidth,
+          window.innerHeight
+        );
+
+
+        renderer.setPixelRatio(
+          Math.min(
+            window.devicePixelRatio || 1,
+            1.7
+          )
+        );
+
+      }
+    );
+
+  </script>
+
+</body>
+</html>
