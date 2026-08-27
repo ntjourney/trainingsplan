@@ -7,12 +7,12 @@
       content="width=device-width,
                initial-scale=1,
                maximum-scale=1,
-               user-scalable=no">
+               user-scalable=no,
+               viewport-fit=cover">
 
-<title>N/F — 3D</title>
+<title>N/F — Premium 3D</title>
 
 <style>
-
 * {
     box-sizing: border-box;
 }
@@ -38,12 +38,14 @@ body {
     position: fixed;
     inset: 0;
     overflow: hidden;
+    touch-action: none;
+
     background:
         radial-gradient(
-            ellipse at 50% 45%,
-            #07111a 0%,
-            #020509 45%,
-            #000 78%
+            ellipse at 50% 43%,
+            #07121d 0%,
+            #02060a 43%,
+            #000000 80%
         );
 }
 
@@ -53,23 +55,9 @@ canvas {
     height: 100%;
 }
 
-.vignette {
+.background-glow {
     position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 10;
-
-    background:
-        radial-gradient(
-            ellipse at center,
-            transparent 42%,
-            rgba(0,0,0,.18) 63%,
-            rgba(0,0,0,.72) 100%
-        );
-}
-
-.glow {
-    position: fixed;
+    z-index: 1;
 
     left: 50%;
     top: 43%;
@@ -85,39 +73,57 @@ canvas {
     background:
         radial-gradient(
             ellipse,
-            rgba(0,110,255,.10),
+            rgba(0, 105, 255, .13),
             transparent 68%
         );
 
     filter: blur(45px);
-
-    z-index: 2;
 }
 
-.badge {
+.vignette {
+    position: fixed;
+    inset: 0;
+
+    z-index: 10;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 40%,
+            rgba(0,0,0,.16) 62%,
+            rgba(0,0,0,.78) 100%
+        );
+}
+
+.hint {
     position: fixed;
 
     left: 50%;
-    bottom: 24px;
+    bottom:
+        calc(
+            18px +
+            env(safe-area-inset-bottom)
+        );
 
     transform:
         translateX(-50%);
+
+    z-index: 20;
 
     padding:
         8px 15px;
 
     border:
         1px solid
-        rgba(70,150,255,.18);
+        rgba(90,170,255,.20);
 
     border-radius:
         999px;
 
-    color:
-        rgba(190,220,255,.48);
-
     background:
-        rgba(0,0,0,.30);
+        rgba(0,5,10,.42);
 
     backdrop-filter:
         blur(12px);
@@ -125,29 +131,37 @@ canvas {
     -webkit-backdrop-filter:
         blur(12px);
 
-    font-size: 8px;
-    font-weight: 800;
-    letter-spacing: .22em;
+    color:
+        rgba(205,230,255,.52);
 
-    z-index: 20;
+    font-size:
+        8px;
 
-    white-space: nowrap;
+    font-weight:
+        800;
 
-    pointer-events: none;
+    letter-spacing:
+        .20em;
+
+    white-space:
+        nowrap;
+
+    pointer-events:
+        none;
 }
-
 </style>
 </head>
+
 
 <body>
 
 <div id="app">
 
-    <div class="glow"></div>
+    <div class="background-glow"></div>
 
     <div class="vignette"></div>
 
-    <div class="badge">
+    <div class="hint">
         N/F · DRAG TO ROTATE
     </div>
 
@@ -160,9 +174,10 @@ import * as THREE from
 "https://esm.sh/three@0.165.0";
 
 
-/* =====================================================
-   SETUP
-===================================================== */
+
+/* =========================================================
+   RENDERER
+========================================================= */
 
 const app =
     document.getElementById("app");
@@ -170,9 +185,16 @@ const app =
 
 const renderer =
     new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        powerPreference: "high-performance"
+
+        antialias:
+            true,
+
+        alpha:
+            true,
+
+        powerPreference:
+            "high-performance"
+
     });
 
 
@@ -199,675 +221,765 @@ renderer.toneMapping =
 
 
 renderer.toneMappingExposure =
-    1.15;
+    1.20;
 
 
-app.appendChild(
+app.prepend(
     renderer.domElement
 );
 
 
 
-/* =====================================================
+/* =========================================================
    SCENE
-===================================================== */
+========================================================= */
 
 const scene =
     new THREE.Scene();
 
 
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
 const camera =
     new THREE.PerspectiveCamera(
-        27,
+
+        28,
+
         window.innerWidth /
         window.innerHeight,
-        .1,
+
+        0.1,
+
         100
+
     );
 
 
-camera.position.z =
-    14;
+camera.position.set(
+    0,
+    0,
+    14
+);
 
 
 
-/* =====================================================
-   MASTER GROUP
-===================================================== */
+/* =========================================================
+   MASTER LOGO
+========================================================= */
 
-const logoGroup =
+const logo =
     new THREE.Group();
 
 
 scene.add(
-    logoGroup
+    logo
 );
 
 
 /*
-    This is deliberately MUCH smaller
-    than the previous version.
+    Size is intentionally restrained.
 */
 
-logoGroup.scale.set(
-    .78,
-    .78,
-    .78
+logo.scale.set(
+    .76,
+    .76,
+    .76
 );
 
 
-/*
-    Vertical positioning.
-*/
-
-logoGroup.position.y =
-    .55;
+logo.position.y =
+    .25;
 
 
 
-/* =====================================================
-   ORIGINAL IMAGE
-===================================================== */
-
-const image =
-    new Image();
-
-
-image.crossOrigin =
-    "anonymous";
-
-
-image.src =
-    "IMG_2071.png";
-
-
-/* =====================================================
-   IMAGE → LOGO EXTRACTION
-===================================================== */
+/* =========================================================
+   PRECISE N/F SILHOUETTE
+========================================================= */
 
 /*
-   Instead of manually recreating the logo,
-   we take the actual pixels from your artwork.
+   Coordinates are based on the supplied
+   reference image.
 
-   The original picture has a very bright metallic
-   logo against a predominantly dark environment.
+   Image coordinate system:
 
-   Therefore we use brightness + saturation +
-   position to isolate the logo.
+   x → right
+   y → down
 */
 
-function buildLogoTexture() {
+const SHAPES = [
 
-    const canvas =
-        document.createElement(
-            "canvas"
-        );
+    /* =====================================================
+       LEFT / MAIN N
+    ===================================================== */
 
+    [
+        [165,249],
+        [371,249],
 
-    /*
-       Original artwork:
-       1024 × 1536
-    */
+        [635,728],
+        [669,824],
 
-    const sourceWidth =
-        1024;
+        [700,877],
 
-    const sourceHeight =
-        1536;
+        [744,593],
 
+        [779,376],
 
-    /*
-       Logo occupies roughly the upper half.
-    */
+        [667,376],
 
-    const cropX =
-        45;
+        [635,728],
 
-    const cropY =
-        165;
+        [316,414],
 
-    const cropWidth =
-        935;
+        [276,698],
 
-    const cropHeight =
-        670;
+        [110,874],
+
+        [218,610],
+
+        [228,311]
+    ],
 
 
-    canvas.width =
-        cropWidth;
+    /* =====================================================
+       TOP F BAR
+    ===================================================== */
 
-    canvas.height =
-        cropHeight;
-
-
-    const ctx =
-        canvas.getContext(
-            "2d"
-        );
-
-
-    ctx.drawImage(
-        image,
-
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-
-        0,
-        0,
-        cropWidth,
-        cropHeight
-    );
+    [
+        [685,364],
+        [778,258],
+        [1145,258],
+        [1037,374],
+        [858,374],
+        [779,364]
+    ],
 
 
-    const pixels =
-        ctx.getImageData(
-            0,
-            0,
-            cropWidth,
-            cropHeight
-        );
+    /* =====================================================
+       LOWER F BAR
+    ===================================================== */
+
+    [
+        [790,436],
+        [1127,436],
+        [1010,539],
+        [842,539],
+        [814,542],
+        [840,557],
+        [1027,557],
+        [1110,479],
+        [846,479],
+        [790,521]
+    ]
+
+];
 
 
-    const data =
-        pixels.data;
+
+/* =========================================================
+   COORDINATE SYSTEM
+========================================================= */
+
+const LEFT =
+    105;
+
+const RIGHT =
+    1150;
+
+const TOP =
+    245;
+
+const BOTTOM =
+    885;
 
 
-    /*
-       Create a soft logo mask.
-
-       Bright metallic pixels are preserved.
-       Dark mountain/person pixels are removed.
-    */
-
-    for (
-        let i = 0;
-        i < data.length;
-        i += 4
-    ) {
-
-        const r =
-            data[i];
-
-        const g =
-            data[i + 1];
-
-        const b =
-            data[i + 2];
+const WIDTH =
+    RIGHT -
+    LEFT;
 
 
-        const brightness =
-            (
-                r * .299 +
-                g * .587 +
-                b * .114
-            );
+const HEIGHT =
+    BOTTOM -
+    TOP;
 
 
-        const blue =
-            b - (
-                (r + g) / 2
-            );
+const WORLD_WIDTH =
+    10.7;
 
 
-        /*
-           Metallic silver:
-           bright and relatively neutral.
-        */
-
-        let alpha = 0;
+const SX =
+    WORLD_WIDTH /
+    WIDTH;
 
 
-        if (
-            brightness > 105 &&
-            Math.abs(blue) < 70
-        ) {
+const SY =
+    6.65 /
+    HEIGHT;
 
-            alpha =
-                Math.min(
-                    255,
-                    (
-                        brightness - 85
-                    ) * 3.0
+
+function worldX(
+    x
+) {
+
+    return (
+        x -
+        (
+            LEFT +
+            RIGHT
+        ) / 2
+    ) * SX;
+
+}
+
+
+function worldY(
+    y
+) {
+
+    return -(
+        y -
+        (
+            TOP +
+            BOTTOM
+        ) / 2
+    ) * SY;
+
+}
+
+
+
+/* =========================================================
+   CREATE SHAPE
+========================================================= */
+
+function createShape(
+    points
+) {
+
+    const shape =
+        new THREE.Shape();
+
+
+    points.forEach(
+        (
+            point,
+            index
+        ) => {
+
+            const x =
+                worldX(
+                    point[0]
                 );
 
-        }
 
-
-        /*
-           Blue illuminated edges.
-        */
-
-        if (
-            blue > 18 &&
-            brightness > 55
-        ) {
-
-            alpha =
-                Math.max(
-                    alpha,
-                    Math.min(
-                        255,
-                        (
-                            brightness - 40
-                        ) * 2.4
-                    )
+            const y =
+                worldY(
+                    point[1]
                 );
 
+
+            if (
+                index === 0
+            ) {
+
+                shape.moveTo(
+                    x,
+                    y
+                );
+
+            }
+
+            else {
+
+                shape.lineTo(
+                    x,
+                    y
+                );
+
+            }
+
         }
+    );
 
 
-        /*
-           Remove very dark pixels.
-        */
-
-        if (
-            brightness < 70
-        ) {
-
-            alpha =
-                0;
-
-        }
+    shape.closePath();
 
 
-        data[i + 3] =
-            alpha;
+    return shape;
 
-    }
+}
 
 
-    ctx.putImageData(
-        pixels,
+
+/* =========================================================
+   MATERIALS
+========================================================= */
+
+const metalSide =
+    new THREE.MeshPhysicalMaterial({
+
+        color:
+            0x69727a,
+
+        metalness:
+            1,
+
+        roughness:
+            .20,
+
+        clearcoat:
+            .70,
+
+        clearcoatRoughness:
+            .12
+
+    });
+
+
+const metalFront =
+    new THREE.MeshPhysicalMaterial({
+
+        color:
+            0xc4c9cd,
+
+        metalness:
+            1,
+
+        roughness:
+            .17,
+
+        clearcoat:
+            .85,
+
+        clearcoatRoughness:
+            .10
+
+    });
+
+
+const darkBack =
+    new THREE.MeshPhysicalMaterial({
+
+        color:
+            0x0a1118,
+
+        metalness:
+            .95,
+
+        roughness:
+            .25
+
+    });
+
+
+const blueMaterial =
+    new THREE.MeshBasicMaterial({
+
+        color:
+            0x007cff,
+
+        transparent:
+            true,
+
+        opacity:
+            .95
+
+    });
+
+
+
+/* =========================================================
+   BUILD EACH 3D SECTION
+========================================================= */
+
+for (
+    const points of SHAPES
+) {
+
+    const shape =
+        createShape(
+            points
+        );
+
+
+    /* -----------------------------------------------------
+       REAL EXTRUSION
+    ----------------------------------------------------- */
+
+    const extrusion =
+        new THREE.ExtrudeGeometry(
+
+            shape,
+
+            {
+
+                depth:
+                    .72,
+
+                bevelEnabled:
+                    true,
+
+                bevelThickness:
+                    .055,
+
+                bevelSize:
+                    .045,
+
+                bevelSegments:
+                    4,
+
+                curveSegments:
+                    2
+
+            }
+
+        );
+
+
+    extrusion.translate(
         0,
-        0
+        0,
+        -.36
     );
 
 
-    const texture =
-        new THREE.CanvasTexture(
-            canvas
-        );
-
-
-    texture.colorSpace =
-        THREE.SRGBColorSpace;
-
-
-    texture.anisotropy =
-        renderer
-        .capabilities
-        .getMaxAnisotropy();
-
-
-    texture.minFilter =
-        THREE.LinearMipmapLinearFilter;
-
-
-    texture.magFilter =
-        THREE.LinearFilter;
-
-
-    return {
-        texture,
-        width: cropWidth,
-        height: cropHeight
-    };
-
-}
-
-
-
-/* =====================================================
-   CREATE FRONT FACE
-===================================================== */
-
-function createFront(
-    result
-) {
-
-    const aspect =
-        result.width /
-        result.height;
-
-
-    /*
-       Reasonable physical size.
-    */
-
-    const height =
-        6.4;
-
-
-    const width =
-        height * aspect;
-
-
-    const geometry =
-        new THREE.PlaneGeometry(
-            width,
-            height
-        );
-
-
-    const material =
-        new THREE.MeshBasicMaterial({
-
-            map:
-                result.texture,
-
-            transparent:
-                true,
-
-            alphaTest:
-                .015,
-
-            side:
-                THREE.DoubleSide,
-
-            depthWrite:
-                true
-
-        });
-
-
-    const mesh =
+    const body =
         new THREE.Mesh(
-            geometry,
-            material
+
+            extrusion,
+
+            metalSide
+
         );
 
 
-    mesh.position.z =
-        .34;
-
-
-    return mesh;
-
-}
-
-
-
-/* =====================================================
-   CREATE DEPTH LAYER
-===================================================== */
-
-function createDepthLayer(
-    texture,
-    width,
-    height,
-    z,
-    darken
-) {
-
-    const geometry =
-        new THREE.PlaneGeometry(
-            width,
-            height
-        );
-
-
-    const material =
-        new THREE.MeshPhysicalMaterial({
-
-            map:
-                texture,
-
-            transparent:
-                true,
-
-            alphaTest:
-                .015,
-
-            color:
-                new THREE.Color(
-                    darken
-                ),
-
-            metalness:
-                1,
-
-            roughness:
-                .27,
-
-            side:
-                THREE.DoubleSide
-
-        });
-
-
-    const mesh =
-        new THREE.Mesh(
-            geometry,
-            material
-        );
-
-
-    mesh.position.z =
-        z;
-
-
-    return mesh;
-
-}
-
-
-
-/* =====================================================
-   CREATE BLUE BACKING
-===================================================== */
-
-function createBlueBacking(
-    width,
-    height
-) {
-
-    const geometry =
-        new THREE.PlaneGeometry(
-            width * 1.005,
-            height * 1.005
-        );
-
-
-    const material =
-        new THREE.MeshBasicMaterial({
-
-            color:
-                0x006eff,
-
-            transparent:
-                true,
-
-            opacity:
-                .88,
-
-            side:
-                THREE.DoubleSide
-
-        });
-
-
-    const mesh =
-        new THREE.Mesh(
-            geometry,
-            material
-        );
-
-
-    mesh.position.z =
-        -.34;
-
-
-    return mesh;
-
-}
-
-
-
-/* =====================================================
-   BUILD
-===================================================== */
-
-image.onload =
-() => {
-
-    const result =
-        buildLogoTexture();
-
-
-    /*
-       Calculate dimensions.
-    */
-
-    const aspect =
-        result.width /
-        result.height;
-
-
-    const height =
-        6.4;
-
-
-    const width =
-        height * aspect;
-
-
-    /*
-       Blue rear plate.
-    */
-
-    logoGroup.add(
-        createBlueBacking(
-            width,
-            height
-        )
+    logo.add(
+        body
     );
 
 
-    /*
-       Multiple depth layers.
 
-       These are very close together,
-       creating believable physical depth
-       without destroying the original artwork.
-    */
+    /* -----------------------------------------------------
+       FRONT FACE
+    ----------------------------------------------------- */
 
-    const depthSteps =
-        12;
-
-
-    for (
-        let i = 0;
-        i < depthSteps;
-        i++
-    ) {
-
-        const z =
-            -.30 +
-            (
-                i *
-                .048
-            );
-
-
-        const layer =
-            createDepthLayer(
-
-                result.texture,
-
-                width,
-                height,
-
-                z,
-
-                0.22 +
-                i * .018
-
-            );
-
-
-        /*
-           Darker layers are behind
-           the actual front artwork.
-        */
-
-        logoGroup.add(
-            layer
+    const frontGeometry =
+        new THREE.ShapeGeometry(
+            shape
         );
 
-    }
-
-
-    /*
-       Exact original front.
-    */
 
     const front =
-        createFront(
-            result
+        new THREE.Mesh(
+
+            frontGeometry,
+
+            metalFront
+
         );
 
 
-    logoGroup.add(
+    front.position.z =
+        .37;
+
+
+    logo.add(
         front
     );
 
 
-    /*
-       Start animation.
-    */
 
-    animate();
+    /* -----------------------------------------------------
+       BACK FACE
+    ----------------------------------------------------- */
 
-};
+    const backGeometry =
+        new THREE.ShapeGeometry(
+            shape
+        );
 
 
+    const back =
+        new THREE.Mesh(
 
-/* =====================================================
-   LIGHTING
-===================================================== */
+            backGeometry,
 
-const ambient =
-    new THREE.HemisphereLight(
-        0x9fcfff,
-        0x020304,
-        .9
+            darkBack
+
+        );
+
+
+    back.position.z =
+        -.39;
+
+
+    logo.add(
+        back
     );
 
 
-scene.add(
-    ambient
+
+    /* -----------------------------------------------------
+       BLUE EDGE
+    ----------------------------------------------------- */
+
+    const points3D =
+        points.map(
+            point => {
+
+                return new THREE.Vector3(
+
+                    worldX(
+                        point[0]
+                    ),
+
+                    worldY(
+                        point[1]
+                    ),
+
+                    -.43
+
+                );
+
+            }
+        );
+
+
+    points3D.push(
+        points3D[0].clone()
+    );
+
+
+    const edgeGeometry =
+        new THREE.BufferGeometry()
+        .setFromPoints(
+            points3D
+        );
+
+
+    const edge =
+        new THREE.Line(
+
+            edgeGeometry,
+
+            blueMaterial
+
+        );
+
+
+    logo.add(
+        edge
+    );
+
+
+
+    /* -----------------------------------------------------
+       SECONDARY BLUE GLOW
+    ----------------------------------------------------- */
+
+    const glow =
+        new THREE.Line(
+
+            edgeGeometry,
+
+            new THREE.LineBasicMaterial({
+
+                color:
+                    0x008cff,
+
+                transparent:
+                    true,
+
+                opacity:
+                    .25,
+
+                blending:
+                    THREE.AdditiveBlending
+
+            })
+
+        );
+
+
+    glow.scale.set(
+        1.012,
+        1.012,
+        1
+    );
+
+
+    logo.add(
+        glow
+    );
+
+}
+
+
+
+/* =========================================================
+   METAL DETAIL
+========================================================= */
+
+/*
+   Fine procedural brushed-metal texture.
+*/
+
+const textureCanvas =
+    document.createElement(
+        "canvas"
+    );
+
+
+textureCanvas.width =
+    512;
+
+textureCanvas.height =
+    512;
+
+
+const textureContext =
+    textureCanvas.getContext(
+        "2d"
+    );
+
+
+const textureData =
+    textureContext.createImageData(
+        512,
+        512
+    );
+
+
+for (
+    let i = 0;
+    i < textureData.data.length;
+    i += 4
+) {
+
+    const value =
+        145 +
+        Math.random() * 100;
+
+
+    textureData.data[i] =
+        value;
+
+    textureData.data[i + 1] =
+        value;
+
+    textureData.data[i + 2] =
+        value;
+
+    textureData.data[i + 3] =
+        30;
+
+}
+
+
+textureContext.putImageData(
+    textureData,
+    0,
+    0
 );
 
 
-const whiteLight =
-    new THREE.DirectionalLight(
-        0xffffff,
-        3.4
+const metalTexture =
+    new THREE.CanvasTexture(
+        textureCanvas
     );
 
 
-whiteLight.position.set(
-    -5,
-    5,
+metalTexture.wrapS =
+    THREE.RepeatWrapping;
+
+
+metalTexture.wrapT =
+    THREE.RepeatWrapping;
+
+
+metalTexture.repeat.set(
+    8,
     8
 );
 
 
-scene.add(
-    whiteLight
+metalFront.map =
+    metalTexture;
+
+
+metalFront.color.set(
+    0xffffff
 );
 
 
-const blueLight =
-    new THREE.DirectionalLight(
-        0x168cff,
-        3.8
+metalFront.needsUpdate =
+    true;
+
+
+
+/* =========================================================
+   LIGHTING
+========================================================= */
+
+const hemisphere =
+    new THREE.HemisphereLight(
+
+        0xd9ecff,
+
+        0x010203,
+
+        1.05
+
     );
 
 
-blueLight.position.set(
+scene.add(
+    hemisphere
+);
+
+
+
+/* KEY LIGHT */
+
+const keyLight =
+    new THREE.DirectionalLight(
+
+        0xffffff,
+
+        4.6
+
+    );
+
+
+keyLight.position.set(
+    -5,
+    6,
+    9
+);
+
+
+scene.add(
+    keyLight
+);
+
+
+
+/* BLUE RIM */
+
+const blueRim =
+    new THREE.DirectionalLight(
+
+        0x168cff,
+
+        4.0
+
+    );
+
+
+blueRim.position.set(
     6,
     1,
     5
@@ -875,19 +987,53 @@ blueLight.position.set(
 
 
 scene.add(
-    blueLight
+    blueRim
 );
 
 
-const rimLight =
+
+/* FRONT HIGHLIGHT */
+
+const frontLight =
     new THREE.PointLight(
-        0x008cff,
-        16,
-        15
+
+        0xffffff,
+
+        7,
+
+        12
+
     );
 
 
-rimLight.position.set(
+frontLight.position.set(
+    -1,
+    3,
+    6
+);
+
+
+scene.add(
+    frontLight
+);
+
+
+
+/* BLUE GLOW */
+
+const blueGlow =
+    new THREE.PointLight(
+
+        0x008cff,
+
+        17,
+
+        16
+
+    );
+
+
+blueGlow.position.set(
     0,
     0,
     4
@@ -895,40 +1041,40 @@ rimLight.position.set(
 
 
 scene.add(
-    rimLight
+    blueGlow
 );
 
 
 
-/* =====================================================
+/* =========================================================
    INTERACTION
-===================================================== */
+========================================================= */
 
 let dragging =
     false;
 
 
-let lastX =
+let previousX =
     0;
 
 
-let lastY =
+let previousY =
     0;
 
 
-let targetY =
+let targetRotationY =
     0;
 
 
-let targetX =
+let targetRotationX =
     0;
 
 
-let rotationY =
+let currentRotationY =
     0;
 
 
-let rotationX =
+let currentRotationX =
     0;
 
 
@@ -938,123 +1084,149 @@ let lastInteraction =
 
 
 renderer.domElement.addEventListener(
+
     "pointerdown",
-    e => {
+
+    event => {
 
         dragging =
             true;
 
-        lastX =
-            e.clientX;
 
-        lastY =
-            e.clientY;
+        previousX =
+            event.clientX;
+
+
+        previousY =
+            event.clientY;
+
 
         lastInteraction =
             performance.now();
 
+
         renderer.domElement.setPointerCapture(
-            e.pointerId
+            event.pointerId
         );
 
     }
+
 );
 
 
 
 renderer.domElement.addEventListener(
-    "pointermove",
-    e => {
 
-        if (!dragging)
+    "pointermove",
+
+    event => {
+
+        if (
+            !dragging
+        ) {
+
             return;
 
-
-        const dx =
-            e.clientX -
-            lastX;
+        }
 
 
-        const dy =
-            e.clientY -
-            lastY;
+        const deltaX =
+            event.clientX -
+            previousX;
+
+
+        const deltaY =
+            event.clientY -
+            previousY;
+
+
+        targetRotationY +=
+            deltaX *
+            .003;
+
+
+        targetRotationX +=
+            deltaY *
+            .0017;
 
 
         /*
-           Deliberately subtle.
+           Controlled maximum rotation.
         */
 
-        targetY +=
-            dx * .0032;
-
-
-        targetX +=
-            dy * .0018;
-
-
-        /*
-           Prevent crazy rotations.
-        */
-
-        targetY =
+        targetRotationY =
             THREE.MathUtils.clamp(
-                targetY,
+
+                targetRotationY,
+
                 -.34,
+
                 .34
+
             );
 
 
-        targetX =
+        targetRotationX =
             THREE.MathUtils.clamp(
-                targetX,
+
+                targetRotationX,
+
                 -.12,
+
                 .12
+
             );
 
 
-        lastX =
-            e.clientX;
+        previousX =
+            event.clientX;
 
 
-        lastY =
-            e.clientY;
+        previousY =
+            event.clientY;
 
 
         lastInteraction =
             performance.now();
 
     }
+
 );
 
 
 
 renderer.domElement.addEventListener(
+
     "pointerup",
+
     () => {
 
         dragging =
             false;
 
     }
-);
 
+);
 
 
 renderer.domElement.addEventListener(
+
     "pointercancel",
+
     () => {
 
         dragging =
             false;
 
     }
+
 );
 
 
 
-/* =====================================================
+/* =========================================================
    ANIMATION
-===================================================== */
+========================================================= */
 
 const clock =
     new THREE.Clock();
@@ -1067,15 +1239,9 @@ function animate() {
     );
 
 
-    const t =
+    const time =
         clock.getElapsedTime();
 
-
-    /*
-       Idle animation.
-
-       Very small movement.
-    */
 
     const idle =
         performance.now() -
@@ -1083,74 +1249,82 @@ function animate() {
         1500;
 
 
-    const autoY =
+    /*
+       Extremely subtle automatic movement.
+    */
+
+    const automaticY =
         idle
+
             ? Math.sin(
-                t * .28
-              ) * .075
+                time * .27
+              ) * .065
+
             : 0;
 
 
-    const autoX =
+    const automaticX =
         idle
+
             ? Math.sin(
-                t * .21
-              ) * .018
+                time * .21
+              ) * .015
+
             : 0;
 
 
     const desiredY =
-        targetY +
-        autoY;
+        targetRotationY +
+        automaticY;
 
 
     const desiredX =
-        targetX +
-        autoX;
+        targetRotationX +
+        automaticX;
 
 
-    rotationY +=
+    currentRotationY +=
         (
             desiredY -
-            rotationY
-        ) * .045;
+            currentRotationY
+        ) * .055;
 
 
-    rotationX +=
+    currentRotationX +=
         (
             desiredX -
-            rotationX
-        ) * .045;
+            currentRotationX
+        ) * .055;
 
 
-    logoGroup.rotation.y =
-        rotationY;
+    logo.rotation.y =
+        currentRotationY;
 
 
-    logoGroup.rotation.x =
-        rotationX;
+    logo.rotation.x =
+        currentRotationX;
 
 
     /*
-       Tiny floating movement.
+       Almost invisible floating effect.
     */
 
-    logoGroup.position.y =
-        .55 +
+    logo.position.y =
+        .25 +
         Math.sin(
-            t * .55
+            time * .5
         ) * .018;
 
 
     /*
-       Blue light breathing.
+       Blue illumination breathing.
     */
 
-    rimLight.intensity =
-        16 +
+    blueGlow.intensity =
+        17 +
         Math.sin(
-            t * .8
-        ) * 2.5;
+            time * .8
+        ) * 2;
 
 
     renderer.render(
@@ -1161,13 +1335,18 @@ function animate() {
 }
 
 
+animate();
 
-/* =====================================================
-   RESIZE
-===================================================== */
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
 window.addEventListener(
+
     "resize",
+
     () => {
 
         camera.aspect =
@@ -1185,13 +1364,19 @@ window.addEventListener(
 
 
         renderer.setPixelRatio(
+
             Math.min(
+
                 window.devicePixelRatio || 1,
+
                 2
+
             )
+
         );
 
     }
+
 );
 
 </script>
